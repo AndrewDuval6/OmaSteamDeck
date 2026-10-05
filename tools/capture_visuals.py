@@ -39,7 +39,9 @@ with tempfile.TemporaryDirectory() as temp:
     shell.choose_profile(0)
     for tab in TABS:
         shell.set_tab(tab); capture(tab.lower()+'-large')
-    shell.state.data['scale']=100; shell.apply_scale(); shell.show_splash(); capture('startup')
+    shell.state.data['scale']=100; shell.apply_scale(); shell.show_splash()
+    QTest.qWait(1000)  # Capture after the staged product-name reveal.
+    capture('startup')
     shell.finish_splash(); capture('startup-transition'); QTest.qWait(400)
     shell.close()
 print(output)

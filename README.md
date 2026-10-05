@@ -1,6 +1,11 @@
-# OmaSteamDeck · Build 1
+# OmaFlow · Build 1 integration candidate
 
-A native, controller-first Steam Deck handheld console with a real Omarchy + Hyprland desktop alongside it. Animated 3D OSD startup, saved profiles, Games, Media, Store, Library, Apps, Settings, tiled windows and workspaces.
+A native, controller-first Steam Deck handheld console with a real Omarchy + Hyprland desktop alongside it. Animated 3D startup, saved profiles, Home, Games, Media, Store, Library, Apps, Settings, tiled windows and workspaces.
+
+The visible product name is **OmaFlow**; the repository, Python package, command
+and existing config paths retain **OmaSteamDeck / omasteamdeck** identifiers.
+The startup logo is a review concept. This candidate remains on
+**`build1/integration`** pending review and physical Steam Deck acceptance.
 
 **Build 1 targets Steam Deck handheld at 1280 × 800.** TV/docked optimization comes later. This repository does **not** partition disks, change bootloaders, install an OS, or rewrite desktop configuration.
 
@@ -9,7 +14,7 @@ A native, controller-first Steam Deck handheld console with a real Omarchy + Hyp
 The full experience requires an **existing Omarchy + Hyprland session on Steam Deck**, Python 3.10+, PySide6 and SDL2. Steam is required for Steam games; media/store links use the default browser. Stock SteamOS Gaming Mode does not provide the full desktop integration.
 
 ```bash
-git clone https://github.com/AndrewDuval6/OmaSteamDeck.git
+git clone --branch build1/integration https://github.com/AndrewDuval6/OmaSteamDeck.git
 cd OmaSteamDeck
 ./run.sh
 ```
@@ -57,13 +62,13 @@ Use a **Gamepad** Steam Input template if launching through Steam. Avoid a simul
 
 ## What is included
 
-- Native Qt graphical shell, offline local navigation, perspective-projected animated OSD logo, reduced motion, text scaling, battery/time and controller status.
+- Native Qt graphical shell, offline local navigation, perspective-projected animated monogram, reduced motion, text scaling, battery/time and controller status.
 - Up to eight saved profiles, per-profile favorites and recent launch requests.
 - Steam library discovery (including extra drives), visible desktop apps and exported Flatpaks; real launch actions.
 - Media and store destinations open externally. Services handle login, playback, purchases and installation; the shell does not pretend to install packages.
 - Hyprland's real tiling/floating windows and workspaces with version-aware dispatching. Omarchy Files, Terminal, system menu, sound and brightness controls.
 - Automated tests, live compositor smoke test, development screenshots and CI.
 
-[Build 1 specification](docs/BUILD1.md) · [Testing and hardware checklist](docs/TESTING.md) · [Product direction](docs/VISION.md)
+[Integration handoff](docs/INTEGRATION.md) · [Build 1 specification](docs/BUILD1.md) · [Testing and hardware checklist](docs/TESTING.md) · [Product direction](docs/VISION.md)
 
 The earlier web prototype is preserved in `index.html` and `src/`; it is not the native build. Build 1 implementation has been tested on a Linux Omarchy/Hyprland development host. **Physical Steam Deck acceptance is still required.**

@@ -1,6 +1,6 @@
-# OmaSteamDeck Build 1 specification
+# OmaFlow Build 1 specification
 
-Build 1 is a complete, runnable **Steam Deck handheld experience** combining the controller-first OmaSteamDeck console interface with a real **Omarchy + Hyprland desktop**. The handheld display at **1280 × 800** is the sole product target. TV and docked optimization belong to a later build.
+Build 1 targets a complete, runnable **Steam Deck handheld experience** combining the controller-first OmaFlow console interface with a real **Omarchy + Hyprland desktop**. The handheld display at **1280 × 800** is the sole product target. TV and docked optimization belong to a later build. The repository and internal package/config identifiers remain OmaSteamDeck / omasteamdeck.
 
 ## Target environment and non-negotiable boundaries
 
@@ -15,12 +15,13 @@ Build 1 is a complete, runnable **Steam Deck handheld experience** combining the
 
 ### Startup and profiles
 
-Launch full screen → animated, perspective-projected 3D OSD logo → profile picker → console. Reduced motion renders a still logo. Profiles can be created and renamed entirely with the controller keyboard. Each profile has its own pinned collection and recent launch requests; preferences and profiles survive restarts. Profiles are not separate Linux accounts or authentication boundaries.
+Launch full screen → animated, perspective-projected 3D startup symbol → profile picker → console. The current symbol is a review preview; final logo approval remains open. Reduced motion renders a still symbol. Profiles can be created and renamed entirely with the controller keyboard. Each profile has its own pinned collection and recent launch requests; preferences and profiles survive restarts. Profiles are not separate Linux accounts or authentication boundaries.
 
 ### Console destinations
 
 | Section | Build 1 behavior |
 | --- | --- |
+| Home | Four controller-accessible category actions plus actual recent launches/favorites, or an honestly labeled exploration shelf for a new profile. |
 | Games | Discover installed Steam titles from native / Flatpak Steam and additional Steam libraries; launch through Steam; provide an honest empty state and Open Steam action. |
 | Media | Launch YouTube, Spotify, Netflix and Prime Video in the default browser. Accounts, subscriptions and DRM support remain with the service/browser. |
 | Store | Open the actual Steam, Flathub, GOG and itch.io storefronts. Buying/installing is delegated to those storefronts; no fake installation state or automatic package changes. |
