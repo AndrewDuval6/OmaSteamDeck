@@ -37,4 +37,13 @@ class CoreTests(unittest.TestCase):
         self.assertEqual([i.name for i in discover_apps([user,system])],['Example'])
         self.assertEqual(desktop_command(p)[0],['/bin/echo','two words','Example','--icon','example','%'])
 
+    def test_malformed_catalog_file_does_not_abort_discovery(self):
+        apps=self.root/'apps'; apps.mkdir()
+        (apps/'broken.desktop').write_bytes(b'\xff\xfe')
+        self.assertEqual(discover_apps([apps]),[])
+        steam=self.root/'.local/share/Steam/steamapps'; steam.mkdir(parents=True)
+        (steam/'libraryfolders.vdf').write_bytes(b'\xff\xfe')
+        (steam/'appmanifest_123.acf').write_bytes(b'\xff\xfe')
+        self.assertEqual(discover_games(self.root),[])
+
 if __name__=='__main__': unittest.main()

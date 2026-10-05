@@ -43,3 +43,13 @@ class ChordTests(ControllerTests):
         self.pad.lib.buttons={4}; self.pad.poll(); self.pad.lib.buttons=set(); self.assertEqual(self.pad.poll(),['workspaces'])
         self.pad.lib.buttons={4,13}; self.assertEqual(self.pad.poll(),['wm:left'])
         self.pad.lib.buttons=set(); self.assertEqual(self.pad.poll(),[])
+    def test_release_modifier_first_does_not_leak_start_into_menu(self):
+        self.pad.lib.buttons={4,6}; self.assertEqual(self.pad.poll(),['console'])
+        self.pad.lib.buttons={6}; self.assertEqual(self.pad.poll(),[])
+        self.assertEqual(self.pad.poll(),[])
+        self.pad.lib.buttons=set(); self.pad.poll()
+        self.pad.lib.buttons={6}; self.assertEqual(self.pad.poll(),['menu'])
+    def test_release_start_first_does_not_leak_workspace_tap(self):
+        self.pad.lib.buttons={4,6}; self.assertEqual(self.pad.poll(),['console'])
+        self.pad.lib.buttons={4}; self.assertEqual(self.pad.poll(),[])
+        self.pad.lib.buttons=set(); self.assertEqual(self.pad.poll(),[])

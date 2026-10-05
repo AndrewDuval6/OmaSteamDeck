@@ -8,7 +8,7 @@ python3 -m compileall -q omasteamdeck tools
 bash -n run.sh
 ```
 
-Coverage includes profile persistence/isolation and corrupt state, native/extra Steam libraries, desktop entry visibility and arguments, all six pages, grid navigation, search/pinning, launch success/failure, keyboard entry, reduced motion, 1280 × 800 large text, modal focus isolation, controller hotplug/deadzones/repeat, desktop chords, Hyprland version-specific commands, rejected invalid arguments, timeouts and allowlisted Omarchy actions. External launch behavior is mocked in unit tests; it is not proof of running a game or streaming playback.
+Coverage includes profile persistence/isolation and corrupt state, native/extra Steam libraries, desktop entry visibility and arguments, all six pages, grid navigation, search/pinning, launch success/failure, keyboard entry, reduced motion, 1280 × 800 large text, modal focus isolation, controller hotplug/deadzones/repeat, both release orders of desktop chords, invalid catalog encoding, Hyprland version-specific commands, rejected invalid arguments, timeouts and allowlisted Omarchy actions. External launch behavior is mocked in unit tests; it is not proof of running a game or streaming playback.
 
 ## Live compositor smoke test (opt-in)
 
@@ -17,6 +17,17 @@ python3 tools/smoke_hyprland.py
 ```
 
 Run inside Hyprland. Creates two temporary native windows, tests real tiled/floating placement, window focus, workspace changes and return-to-console, then closes only its own windows and restores the previously focused window. Refuses to run if its two QA workspaces (9911/9912) already exist. Does not edit persistent configuration.
+
+## End-to-end input and native startup
+
+```bash
+python3 tools/smoke_input.py
+python3 tools/smoke_shell.py
+```
+
+The input test uses an actual SDL virtual gamepad and polls the real native shell: device hotplug, profile selection, shoulder navigation, D-pad focus, pinning and Back. It is suitable for headless CI and does not claim to emulate Steam Deck hardware.
+
+The shell test is opt-in and runs in the live Hyprland session with temporary profile data. It verifies full-screen startup, automatic profile transition, all sections, the modal workspace picker and return-to-console, then restores focus. It uses the shell's named OSD workspaces and never edits compositor configuration.
 
 ## Visual inspection
 
@@ -28,7 +39,7 @@ Captures the startup, profiles, all sections, on-screen keyboard and largest tex
 
 ## Evidence from the development host
 
-2026-10-04: 28 automated test cases passed (including repeated controller base cases), compile checks and launcher syntax passed. Actual Hyprland 0.56.2 / Omarchy 4.0.4-1 smoke test passed native tiling, floating, focus, window move, workspace switching and return-to-console. Qt 6.11.2 renders were visually inspected at 1280 × 800. Existing compositor reports no configuration errors; no compositor config was modified.
+2026-10-04: 31 automated test cases passed (including repeated controller base cases), compile checks and launcher syntax passed. Actual Hyprland 0.56.2 / Omarchy 4.0.4-1 smoke test passed native tiling, floating, focus, window move, workspace switching and return-to-console. The real SDL virtual-controller test and full-screen native shell smoke test also passed. The baseline GitHub Actions workflow passed on Ubuntu/Python 3.12. Qt 6.11.2 renders were visually inspected at 1280 × 800. Existing compositor reports no configuration errors; no compositor config was modified.
 
 The host is a ThinkPad, **not a Steam Deck**, and has no Steam client installed. This verifies code and real compositor integration; it does not certify the target device.
 

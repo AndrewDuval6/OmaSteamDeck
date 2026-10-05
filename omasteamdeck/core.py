@@ -38,7 +38,7 @@ def discover_apps(roots=None):
                 if d.get('TryExec') and not shutil.which(d['TryExec']):
                     continue
                 result.append(Item('app:'+str(path), d.get('Name', path.stem), d.get('Comment', 'Installed application'), 'app', str(path)))
-            except (OSError, configparser.Error, KeyError):
+            except (OSError, UnicodeError, configparser.Error, KeyError):
                 continue
     return sorted(result, key=lambda x: x.name.lower())
 
@@ -65,7 +65,7 @@ def discover_games(home=None):
         try:
             content = (root/'steamapps/libraryfolders.vdf').read_text()
             libraries.update(Path(p.replace('\\\\','\\'))/'steamapps' for p in re.findall(r'"path"\s+"([^"]+)"', content))
-        except OSError: pass
+        except (OSError, UnicodeError): pass
     games = {}
     for library in sorted(libraries):
         for manifest in library.glob('appmanifest_*.acf'):
@@ -74,7 +74,7 @@ def discover_games(home=None):
                 appid, name = fields.get('appid',''), fields.get('name','')
                 if appid.isdigit() and name:
                     games[appid] = Item('steam:'+appid, name, 'Installed · Steam', 'url', 'steam://rungameid/'+appid, '▶')
-            except OSError: pass
+            except (OSError, UnicodeError): pass
     return sorted(games.values(), key=lambda x: x.name.lower())
 
 class State:

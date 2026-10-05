@@ -10,6 +10,7 @@ class Controller:
         self.held = set()
         self.repeat = {}
         self.chord_used = False
+        self.suppressed = set()
         try:
             self.lib = C.CDLL(ctypes.util.find_library('SDL2') or 'libSDL2.so')
             for name,args,result in [('SDL_SetHint',[C.c_char_p,C.c_char_p],C.c_int),('SDL_InitSubSystem',[C.c_uint],C.c_int),('SDL_PumpEvents',[],None),('SDL_JoystickGetDeviceInstanceID',[C.c_int],C.c_int),('SDL_NumJoysticks',[],C.c_int),('SDL_IsGameController',[C.c_int],C.c_int),('SDL_GameControllerOpen',[C.c_int],C.c_void_p),('SDL_GameControllerGetAttached',[C.c_void_p],C.c_int),('SDL_GameControllerGetButton',[C.c_void_p,C.c_int],C.c_ubyte),('SDL_GameControllerGetAxis',[C.c_void_p,C.c_int],C.c_short),('SDL_GameControllerClose',[C.c_void_p],None),('SDL_GameControllerUpdate',[],None),('SDL_QuitSubSystem',[C.c_uint],None)]:
@@ -39,11 +40,19 @@ class Controller:
                 if value < -18000: active.add(negative)
                 if value > 18000: active.add(positive)
         # Holding View/Back is a desktop modifier; its ordinary tap opens workspaces.
+        raw_active=set(active)
+        suppressed=getattr(self,'suppressed',set())
+        suppressed.intersection_update(raw_active)
         if 'modifier' in active:
             chords={'menu':'console','left':'wm:left','right':'wm:right','up':'wm:up','down':'wm:down','previous':'wm:previous','next':'wm:next','favorite':'wm:tile','search':'wm:move'}
             combo={mapped for original,mapped in chords.items() if original in active}
-            if combo: self.chord_used=True
+            if combo:
+                self.chord_used=True
+                suppressed.update(original for original in chords if original in active)
             active=combo|{'modifier'}
+        else:
+            active-=suppressed
+        self.suppressed=suppressed
         released_modifier='modifier' in self.held and 'modifier' not in active
         now=time.monotonic(); events=[]
         if released_modifier:

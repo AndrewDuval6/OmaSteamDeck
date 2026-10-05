@@ -6,7 +6,7 @@ import os
 from pathlib import Path
 import subprocess
 import sys
-from PySide6.QtCore import Qt, QTimer, QPointF, QEvent, QUrl, QProcess
+from PySide6.QtCore import Qt, QTimer, QPointF, QEvent, QUrl, QProcess, QLockFile
 from PySide6.QtGui import QColor, QPainter, QPolygonF, QLinearGradient, QFont, QDesktopServices, QKeyEvent, QPen
 from PySide6.QtWidgets import (QApplication, QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QPushButton, QLabel, QScrollArea, QFrame, QDialog, QLineEdit)
 from .core import State, Item, MEDIA, STORES, discover_apps, discover_games, desktop_command
@@ -147,6 +147,7 @@ class Shell(QWidget):
         self.desktop=desktop or Desktop(enabled=QApplication.platformName()!='offscreen')
         self.system_processes=[]
         self.desktop_session_ready=False
+        self.attach_attempts=0
         self.apps=discover_apps(); self.games=discover_games()
         self.toast_timer=QTimer(self); self.toast_timer.setSingleShot(True); self.toast_timer.timeout.connect(self.clear_status)
         self.poll_timer=QTimer(self); self.poll_timer.timeout.connect(self.poll); self.poll_timer.start(16)
@@ -347,7 +348,11 @@ class Shell(QWidget):
     def attach_desktop(self):
         try:
             address=self.desktop.shell_address(os.getpid())
-            if not address: return
+            if not address:
+                self.attach_attempts+=1
+                if self.attach_attempts<12: QTimer.singleShot(250,self.attach_desktop)
+                else: self.message('Console window could not attach to Hyprland. Reopen the app to retry.')
+                return
             self.desktop.move_window(address,WORKSPACES['Console'])
             self.desktop.focus_window(address)
             self.desktop_session_ready=True
@@ -394,8 +399,10 @@ class Shell(QWidget):
     def workspace_action(self,dialog,callback):
         # Close the modal first so a focus switch cannot leave an orphaned dialog.
         dialog.accept()
-        try: callback()
-        except DesktopError as exc: self.message(str(exc))
+        def execute():
+            try: callback()
+            except DesktopError as exc: self.message(str(exc))
+        QTimer.singleShot(0,execute)
     def window_actions(self,parent,client):
         d=QDialog(self); d.setWindowTitle('Window controls'); layout=QVBoxLayout(d); layout.setContentsMargins(24,24,24,24); layout.setSpacing(12)
         title=label((client.get('title') or client.get('class','Application'))[:70],'title'); title.setWordWrap(True); layout.addWidget(title)
@@ -510,7 +517,20 @@ def main():
     parser=argparse.ArgumentParser(description='OmaSteamDeck native handheld shell')
     parser.add_argument('--windowed',action='store_true'); parser.add_argument('--skip-splash',action='store_true'); parser.add_argument('--config',type=Path,help='Alternative state file for testing')
     args=parser.parse_args()
-    app=QApplication(sys.argv[:1]); app.setApplicationName('OmaSteamDeck'); shell=Shell(State(args.config),args.windowed,args.skip_splash)
-    return app.exec()
+    app=QApplication(sys.argv[:1]); app.setApplicationName('OmaSteamDeck')
+    state=State(args.config)
+    try: state.path.parent.mkdir(parents=True,exist_ok=True)
+    except OSError as exc:
+        print('Cannot create OmaSteamDeck config folder: '+str(exc),file=sys.stderr); return 1
+    lock=QLockFile(str(state.path.with_suffix('.lock'))); lock.setStaleLockTime(0)
+    if not lock.tryLock(0):
+        info=lock.getLockInfo()
+        desktop=Desktop()
+        if info and info[0]>0 and desktop.available:
+            try: desktop.return_console(info[0]); return 0
+            except DesktopError: pass
+        print('OmaSteamDeck is already running, or its config folder is not writable.',file=sys.stderr); return 1
+    shell=Shell(state,args.windowed,args.skip_splash)
+    result=app.exec(); lock.unlock(); return result
 
 if __name__=='__main__': sys.exit(main())
