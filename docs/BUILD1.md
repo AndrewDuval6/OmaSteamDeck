@@ -4,8 +4,8 @@ Build 1 targets a complete, runnable **Steam Deck handheld experience** combinin
 
 ## Target environment and non-negotiable boundaries
 
-- Run as the signed-in user within an **existing Omarchy + Hyprland installation on Steam Deck**, using Python 3.10+, Qt 6 / PySide6, SDL2 and a working graphical session.
-- The console is a native Qt application, not a browser window or local HTTP server.
+- Run as the signed-in user within an **existing Omarchy + Hyprland installation on Steam Deck**, using Python 3.10+, Qt 6 / PySide6 with Qt WebEngine and Qt WebChannel, SDL2 and a working graphical session.
+- The console is a native Qt application. Only the startup graphics use an embedded Qt WebEngine view; the menus and backend remain native. No standalone browser window or local HTTP server is required.
 - **Do not modify partitions or the bootloader.** No flashing, partition tools, boot entries, OS installer or privileged provisioning are included.
 - Do not overwrite Omarchy or Hyprland configuration. Workspace/window integration operates at runtime through Hyprland IPC.
 - Stock SteamOS Gaming Mode can run the console when dependencies are available, but it is **not the full Build 1 environment**: it does not supply Omarchy or Hyprland. Running the shell does not install either OS component.
@@ -15,7 +15,7 @@ Build 1 targets a complete, runnable **Steam Deck handheld experience** combinin
 
 ### Startup and profiles
 
-Launch full screen → animated, perspective-projected 3D startup symbol → profile picker → console. The current symbol is a review preview; final logo approval remains open. Reduced motion renders a still symbol. Profiles can be created and renamed entirely with the controller keyboard. Each profile has its own pinned collection and recent launch requests; preferences and profiles survive restarts. Profiles are not separate Linux accounts or authentication boundaries.
+Launch full screen → animated startup logo rendered using real Three.js/WebGL geometry, materials, lights and camera → profile picker → console. Reduced motion must render a still view of the same Three.js scene. QPainter projected geometry is not an acceptable replacement for the requested startup. Logo design remains subject to review. Profiles can be created and renamed entirely with the controller keyboard. Each profile has its own pinned collection and recent launch requests; preferences and profiles survive restarts. Profiles are not separate Linux accounts or authentication boundaries.
 
 ### Console destinations
 
