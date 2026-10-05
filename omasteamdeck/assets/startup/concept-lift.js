@@ -1,0 +1,3 @@
+// Lift — alternate original symbol study, not an approved product logo.
+// An open rising ribbon: a narrow incoming path joins a broad returning sweep.
+export const mark = {"outer":[["M",15,113],["C",35,113,45,95,59,74],["C",77,46,87,30,118,30],["C",133,30,146,34,153,40],["C",129,39,117,58,114,76],["C",111,94,118,106,134,108],["C",148,109,157,102,165,96],["C",158,121,140,137,118,143],["C",95,149,76,138,70,118],["C",66,106,68,94,73,85],["C",54,99,57,126,39,130],["C",28,133,19,126,15,113],["Z"]],"holes":[]};

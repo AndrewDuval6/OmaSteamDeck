@@ -1,13 +1,17 @@
 import * as THREE from './vendor/three.module.js';
-import {mark as contours} from './mark.js';
+import {mark as currentMark} from './mark.js';
 
 const params=new URLSearchParams(location.search);
 const reduced=params.get('motion')==='0'||matchMedia('(prefers-reduced-motion: reduce)').matches;
 const preview=params.get('preview')==='1';
 const fixture=params.get('frame');
-const status={ready:false,finished:false,disposed:false,renderer:'three-webgl',version:THREE.REVISION,drawCalls:0,triangles:0,error:null};
+// Alternate studies are review-only; the native shell uses the current candidate.
+const alternate=preview&&params.get('concept')==='lift';
+const contours=alternate?(await import('./concept-lift.js')).mark:currentMark;
+const status={ready:false,finished:false,disposed:false,renderer:'three-webgl',version:THREE.REVISION,concept:alternate?'lift':'open-flow',frames:0,drawCalls:0,triangles:0,error:null};
 window.omaflowStatus=status;
-let renderer,scene,camera,mark,bridge,started,animation,lastPaint=-Infinity,finished=false;
+if(alternate)document.querySelector('#scene').setAttribute('aria-label','Three-dimensional Lift concept');
+let renderer,scene,camera,mark,bridge,started,animation,hiddenSince,nextPaint=0,lastTime=0,finished=false;
 if(window.qt?.webChannelTransport&&!window.QWebChannel){
   await new Promise((resolve,reject)=>{const script=document.createElement('script');script.src='qrc:///qtwebchannel/qwebchannel.js';script.onload=resolve;script.onerror=reject;document.head.appendChild(script);});
 }
@@ -47,7 +51,13 @@ if(preview){skip.textContent='↻  Replay startup';skip.setAttribute('aria-label
 skip.addEventListener('click',preview?()=>location.reload():finish);
 addEventListener('keydown',event=>{if(['Enter','Escape',' '].includes(event.key)){event.preventDefault();finish();}});
 addEventListener('pagehide',dispose);
-addEventListener('visibilitychange',()=>{if(document.hidden)renderer?.setAnimationLoop(null);else if(!finished&&!status.disposed&&!reduced&&fixture===null)renderer?.setAnimationLoop(animation);});
+addEventListener('visibilitychange',()=>{
+  if(document.hidden){hiddenSince=performance.now();renderer?.setAnimationLoop(null);}
+  else if(status.ready&&!finished&&!status.disposed&&!reduced&&fixture===null){
+    if(started!==undefined&&hiddenSince!==undefined)started+=performance.now()-hiddenSince;
+    hiddenSince=undefined;nextPaint=0;renderer?.setAnimationLoop(animation);
+  }
+});
 try{
   document.body.classList.toggle('reduced',reduced);
   renderer=new THREE.WebGLRenderer({antialias:true,alpha:true,powerPreference:'low-power'});
@@ -64,6 +74,31 @@ try{
   const shape=trace(contours.outer,new THREE.Shape());shape.holes=contours.holes.map(commands=>trace(commands,new THREE.Path()));
   const geometry=new THREE.ExtrudeGeometry(shape,{depth:.32,steps:1,curveSegments:24,bevelEnabled:true,bevelSegments:3,bevelThickness:.035,bevelSize:.035});
   geometry.translate(0,0,-.16);
+  // Subdivide only broad face triangles before bending. Long, unsplit triangles
+  // otherwise turn a smooth ribbon surface into visibly faceted reflection bands.
+  const sourcePositions=geometry.attributes.position,sourceNormals=geometry.attributes.normal;
+  const refinedPositions=[],refinedNormals=[];
+  function face(a,b,c,normal,level=0){
+    const edges=[a.distanceToSquared(b),b.distanceToSquared(c),c.distanceToSquared(a)];
+    const longest=Math.max(...edges),side=edges.indexOf(longest);
+    if(longest>.16&&level<8){
+      const points=[a,b,c],u=points[side],v=points[(side+1)%3],w=points[(side+2)%3];
+      const middle=u.clone().add(v).multiplyScalar(.5);
+      face(u,middle,w,normal,level+1);face(middle,v,w,normal,level+1);return;
+    }
+    for(const vertex of [a,b,c]){refinedPositions.push(...vertex);refinedNormals.push(...normal);}
+  }
+  for(let i=0;i<sourcePositions.count;i+=3){
+    const vertices=[0,1,2].map(j=>new THREE.Vector3().fromBufferAttribute(sourcePositions,i+j));
+    const normal=new THREE.Vector3().fromBufferAttribute(sourceNormals,i);
+    if(Math.abs(normal.z)>.999)face(...vertices,normal);
+    else for(let j=0;j<3;j++){
+      refinedPositions.push(...vertices[j]);refinedNormals.push(sourceNormals.getX(i+j),sourceNormals.getY(i+j),sourceNormals.getZ(i+j));
+    }
+  }
+  geometry.setAttribute('position',new THREE.Float32BufferAttribute(refinedPositions,3));
+  geometry.setAttribute('normal',new THREE.Float32BufferAttribute(refinedNormals,3));
+  geometry.deleteAttribute('uv');geometry.clearGroups();
   // Bend the solid through depth; transform normals with the same deformation.
   // This keeps the small vector silhouette while light travels over its surface.
   const positions=geometry.attributes.position,normals=geometry.attributes.normal;
@@ -93,6 +128,8 @@ try{
   const horizon=new THREE.Mesh(new THREE.TorusGeometry(7,.011,4,100),new THREE.MeshBasicMaterial({color:0x80bce9,transparent:true,opacity:.10}));
   horizon.position.set(0,-8.1,-3);horizon.rotation.x=.26;scene.add(horizon);
   function draw(time){
+    if(status.disposed)return;
+    lastTime=time;
     const progress=reduced?1:ease(time/2.15);
     mark.rotation.y=THREE.MathUtils.lerp(-1.02,-.34,progress);
     mark.rotation.x=THREE.MathUtils.lerp(.20,-.075,progress);
@@ -100,6 +137,7 @@ try{
     mark.position.y=.57+(reduced?0:Math.sin(time*1.6)*.035);
     camera.position.set(THREE.MathUtils.lerp(.4,0,progress),.1,THREE.MathUtils.lerp(8.3,7.1,progress));camera.lookAt(0,0,0);
     renderer.render(scene,camera);
+    status.frames++;
     status.drawCalls=renderer.info.render.calls;status.triangles=renderer.info.render.triangles;
     document.body.classList.toggle('wordmark',reduced||time>.8);
     document.querySelector('#loader span').style.width=`${Math.min(100,time/3.1*100)}%`;
@@ -108,9 +146,13 @@ try{
   draw(fixture===null?(reduced?2.2:0):Number(fixture));status.ready=true;
   notify('ready');window.dispatchEvent(new CustomEvent('omaflow-ready'));
   animation=now=>{
-    if(finished||document.hidden)return;
+    if(finished||status.disposed||document.hidden)return;
     if(started===undefined)started=now;
-    if(now-lastPaint<1000/30)return;lastPaint=now;
+    // Keep a fixed cadence instead of drifting to 20 fps on 60 Hz displays.
+    const step=1000/30;
+    if(now+.5<nextPaint)return;
+    if(nextPaint===0)nextPaint=now;
+    nextPaint+=Math.max(1,Math.floor((now-nextPaint)/step)+1)*step;
     const time=(now-started)/1000;draw(time);
     if(time>=3.2&&!preview)finish();
   };
@@ -118,7 +160,7 @@ try{
     if(reduced){if(!preview)setTimeout(finish,900);}
     else renderer.setAnimationLoop(animation);
   }
-  addEventListener('resize',()=>{if(!status.disposed){camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);draw(2.2);}});
+  addEventListener('resize',()=>{if(!status.disposed){camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);draw(lastTime);}});
 }catch(error){
   status.error=String(error);document.body.classList.add('failed');document.querySelector('#fallback').hidden=false;
   notify('failed',status.error);if(!preview)setTimeout(finish,700);

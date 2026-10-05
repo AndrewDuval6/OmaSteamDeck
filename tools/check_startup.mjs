@@ -30,7 +30,7 @@ try{
   await page.goto(origin);await ready();
   const status=await page.evaluate(()=>window.omaflowStatus);
   assert.equal(status.renderer,'three-webgl');assert.equal(status.drawCalls,2);
-  assert(status.triangles>0&&status.triangles<10000);assert.equal(status.error,null);
+  assert(status.triangles>0&&status.triangles<12000);assert.equal(status.error,null);
   await page.waitForFunction(()=>document.body.classList.contains('wordmark'));
   await disposed();assert.equal(await page.evaluate(()=>window.omaflowStatus.finished),true);
   console.log('PASS WebGL geometry, wordmark, timed completion and disposal',status);
@@ -43,6 +43,24 @@ try{
   assert(await page.locator('body').evaluate(el=>el.classList.contains('reduced')));await disposed();
   await page.emulateMedia({reducedMotion:'no-preference'});
   console.log('PASS system reduced-motion preference');
+  await page.goto(origin+'?preview=1&concept=lift');await ready();
+  const study=await page.evaluate(()=>window.omaflowStatus);
+  assert.equal(study.concept,'lift');assert.equal(study.drawCalls,2);
+  assert(study.triangles>0&&study.triangles<12000);assert.equal(study.error,null);
+  const before=await page.evaluate(()=>({frames:window.omaflowStatus.frames,time:performance.now()}));
+  await page.waitForTimeout(1000);
+  const after=await page.evaluate(()=>({frames:window.omaflowStatus.frames,time:performance.now()}));
+  const rendered=after.frames-before.frames,budget=Math.ceil((after.time-before.time)*30/1000)+2;
+  assert(rendered>0&&rendered<=budget,`Unexpected 30 fps cap: ${rendered} frames`);
+  await page.evaluate(()=>window.omaflowDispose());
+  const frozen=await page.evaluate(()=>window.omaflowStatus.frames);
+  await page.evaluate(()=>{window.omaflowRenderAt(1);dispatchEvent(new Event('resize'));document.dispatchEvent(new Event('visibilitychange'));});
+  await page.waitForTimeout(100);
+  assert.equal(await page.evaluate(()=>window.omaflowStatus.frames),frozen);
+  console.log('PASS alternate study, 30 fps cap and no rendering after disposal',study.triangles);
+  // Review query cannot replace the native/default startup mark.
+  await page.goto(origin+'?concept=lift&frame=1');await ready();
+  assert.equal(await page.evaluate(()=>window.omaflowStatus.concept),'open-flow');
   await page.goto(origin+'?preview=1&frame=1.7');await ready();
   if(process.env.STARTUP_SCREENSHOT)await page.screenshot({path:process.env.STARTUP_SCREENSHOT});
   await page.evaluate(()=>document.querySelector('canvas').getContext('webgl2').getExtension('WEBGL_lose_context').loseContext());
