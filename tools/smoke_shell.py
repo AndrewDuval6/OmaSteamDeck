@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 import sys
 import tempfile
+import time
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import QApplication, QPushButton
@@ -18,7 +19,9 @@ original=desktop.query('activeworkspace'); focus=desktop.query('activewindow').g
 with tempfile.TemporaryDirectory() as temp:
     shell=Shell(State(Path(temp)/'state.json'),windowed=False,skip_splash=False)
     try:
-        QTest.qWait(2100)
+        deadline=time.monotonic()+8
+        while time.monotonic()<deadline and not (shell.desktop_session_ready and shell.page=='profiles'):
+            QTest.qWait(50)
         assert shell.desktop_session_ready,'Console failed to attach to Hyprland'
         assert shell.page=='profiles','Splash did not transition to profiles'
         assert desktop.query('activeworkspace')['name']==WORKSPACES['Console']
@@ -35,7 +38,7 @@ with tempfile.TemporaryDirectory() as temp:
         assert desktop.query('activeworkspace')['name']==WORKSPACES['Desktop'],'Workspace picker failed to switch'
         shell.desktop_control('console'); QTest.qWait(100)
         assert desktop.query('activewindow')['title'] in CONSOLE_TITLES,'Return chord handler failed'
-        print('PASS: actual full-screen shell, animated startup, profiles, six sections, modal workspace picker, return-to-console.')
+        print(f'PASS: actual full-screen shell, animated startup, profiles, {len(TABS)} sections, modal workspace picker, return-to-console.')
     finally:
         shell.close(); QTest.qWait(100)
         if focus: desktop.focus_window(focus)

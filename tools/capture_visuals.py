@@ -30,6 +30,9 @@ with tempfile.TemporaryDirectory() as temp:
         shell.set_tab(tab); capture(tab.lower())
     QTimer.singleShot(100,lambda:(app.activeModalWidget().grab().save(str(output/'media-details.png')),app.activeModalWidget().reject()))
     shell.details(MEDIA[0])
+    # Offscreen Qt does not reactivate the parent after closing a modal as a
+    # native compositor does; restore it before inspecting focused states.
+    shell.activateWindow(); QTest.qWait(20)
     shell.state.data['profiles']=[{'name':'Player '+str(n+1),'favorites':[],'recent':[]} for n in range(8)]
     shell.state.data['profiles'][0]['name']='A very long profile name'
     shell.state.data['scale']=130; shell.apply_scale(); shell.show_profiles(); capture('profiles-eight-large')

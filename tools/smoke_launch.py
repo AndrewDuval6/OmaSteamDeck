@@ -9,9 +9,10 @@ import time
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from PySide6.QtTest import QTest
+from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import QApplication
 from omasteamdeck.app import Shell
-from omasteamdeck.core import State, discover_apps
+from omasteamdeck.core import State, discover_apps, MEDIA
 from omasteamdeck.desktop import Desktop, WORKSPACES
 
 
@@ -59,9 +60,19 @@ raise SystemExit(app.exec())
             wait_for(lambda: shell.desktop_session_ready, 'Shell failed to attach to Hyprland')
             shell.choose_profile(0)
             QTest.qWait(50)
+            shell.set_tab('Media')
+            QTimer.singleShot(100, lambda: (shell.navigate('down'), shell.navigate('accept')))
+            shell.details(MEDIA[0])
+            wait_for(lambda: shell.isActiveWindow() and app.focusWidget(), 'Pinning from details lost native controller focus')
+            assert app.focusWidget().item.id == MEDIA[0].id
+            assert MEDIA[0].id in shell.profile['favorites']
             addresses = []
             for item in discover_apps([root]):
-                shell.launch(item)
+                # Use the same modal/controller route as selecting an Apps card.
+                shell.desktop_control('console')
+                QTimer.singleShot(100, lambda: shell.navigate('accept'))
+                shell.details(item)
+                wait_for(lambda: len(shell.children_processes) > len(processes), 'Details dialog did not request launch')
                 process = shell.children_processes[-1]
                 processes.append(process)
                 client = wait_for(
@@ -86,7 +97,7 @@ raise SystemExit(app.exec())
             shell.desktop_control('console')
             wait_for(lambda: desktop.query('activewindow').get('pid') == os.getpid(), 'Could not return to console')
             assert all(p.poll() is None for p in processes), 'Returning closed an external application'
-            print('PASS: shell launches two real native apps; correct workspace, tiling, move, return and history.')
+            print('PASS: modal pin focus; two real native app launches through details; workspace, tiling, move, return and history.')
         finally:
             if shell is not None:
                 shell.close()

@@ -24,3 +24,4 @@ jobs:
           python -m pip install --no-deps --target "$RUNNER_TEMP/osd-package" dist/*.whl
           cd "$RUNNER_TEMP"
           PYTHONPATH="$RUNNER_TEMP/osd-package" python -m omasteamdeck.app --help
+          PYTHONPATH="$RUNNER_TEMP/osd-package" python "$GITHUB_WORKSPACE/tools/smoke_package.py" "$RUNNER_TEMP/osd-package"

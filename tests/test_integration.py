@@ -105,6 +105,15 @@ class IntegrationTests(unittest.TestCase):
         self.assertEqual(shell.profile['name'], 'AB')
         self.assertEqual(State(self.state_path).data['profiles'][1]['name'], 'AB')
 
+    def test_max_profiles_can_reach_exit_with_controller(self):
+        state = State(self.state_path)
+        for number in range(2, 9):
+            state.add_profile(f'Player {number}')
+        shell = self.start()
+        for _ in range(len(shell.rows) + 1):
+            shell.navigate('down')
+        self.assertEqual(APP.focusWidget().text(), 'Exit to desktop')
+
     def test_discovered_desktop_app_executes_and_records_history(self):
         marker = self.root / 'launched.txt'
         program = self.root / 'fixture.py'
