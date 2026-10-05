@@ -39,7 +39,7 @@ Captures the startup, profiles, all sections, on-screen keyboard and largest tex
 
 ## Evidence from the development host
 
-2026-10-04: 31 automated test cases passed (including repeated controller base cases), compile checks and launcher syntax passed. Actual Hyprland 0.56.2 / Omarchy 4.0.4-1 smoke test passed native tiling, floating, focus, window move, workspace switching and return-to-console. The real SDL virtual-controller test and full-screen native shell smoke test also passed. The baseline GitHub Actions workflow passed on Ubuntu/Python 3.12. Qt 6.11.2 renders were visually inspected at 1280 × 800. Existing compositor reports no configuration errors; no compositor config was modified.
+2026-10-04: 32 automated test cases passed (including repeated controller base cases), compile checks and launcher syntax passed. Actual Hyprland 0.56.2 / Omarchy 4.0.4-1 smoke test passed native tiling, floating, focus, window move, workspace switching and return-to-console. The real SDL virtual-controller test and full-screen native shell smoke test also passed. The baseline GitHub Actions workflow passed on Ubuntu/Python 3.12. Qt 6.11.2 renders were visually inspected at 1280 × 800. Existing compositor reports no configuration errors; no compositor config was modified.
 
 The host is a ThinkPad, **not a Steam Deck**, and has no Steam client installed. This verifies code and real compositor integration; it does not certify the target device.
 

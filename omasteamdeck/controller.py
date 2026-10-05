@@ -12,7 +12,7 @@ class Controller:
         self.chord_used = False
         self.suppressed = set()
         try:
-            self.lib = C.CDLL(ctypes.util.find_library('SDL2') or 'libSDL2.so')
+            self.lib = C.CDLL(ctypes.util.find_library('SDL2') or ctypes.util.find_library('SDL2-2.0') or 'libSDL2-2.0.so.0')
             for name,args,result in [('SDL_SetHint',[C.c_char_p,C.c_char_p],C.c_int),('SDL_InitSubSystem',[C.c_uint],C.c_int),('SDL_PumpEvents',[],None),('SDL_JoystickGetDeviceInstanceID',[C.c_int],C.c_int),('SDL_NumJoysticks',[],C.c_int),('SDL_IsGameController',[C.c_int],C.c_int),('SDL_GameControllerOpen',[C.c_int],C.c_void_p),('SDL_GameControllerGetAttached',[C.c_void_p],C.c_int),('SDL_GameControllerGetButton',[C.c_void_p,C.c_int],C.c_ubyte),('SDL_GameControllerGetAxis',[C.c_void_p,C.c_int],C.c_short),('SDL_GameControllerClose',[C.c_void_p],None),('SDL_GameControllerUpdate',[],None),('SDL_QuitSubSystem',[C.c_uint],None)]:
                 fn = getattr(self.lib,name); fn.argtypes=args; fn.restype=result
             self.lib.SDL_SetHint(b'SDL_JOYSTICK_ALLOW_BACKGROUND_EVENTS',b'1')

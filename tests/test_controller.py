@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import patch
+from unittest.mock import patch, Mock
 from omasteamdeck.controller import Controller
 
 class FakeSDL:
@@ -53,3 +53,12 @@ class ChordTests(ControllerTests):
         self.pad.lib.buttons={4,6}; self.assertEqual(self.pad.poll(),['console'])
         self.pad.lib.buttons={4}; self.assertEqual(self.pad.poll(),[])
         self.pad.lib.buttons=set(); self.assertEqual(self.pad.poll(),[])
+
+class RuntimeLibraryTests(unittest.TestCase):
+    def test_runtime_soname_without_development_symlink(self):
+        library=Mock(); library.SDL_InitSubSystem.return_value=0
+        with patch('omasteamdeck.controller.ctypes.util.find_library',return_value=None), patch('omasteamdeck.controller.C.CDLL',return_value=library) as load:
+            controller=Controller()
+            load.assert_called_once_with('libSDL2-2.0.so.0')
+            self.assertIs(controller.lib,library)
+            controller.close()

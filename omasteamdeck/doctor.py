@@ -10,7 +10,7 @@ def main():
     desktop=Desktop()
     try: hardware=Path('/sys/class/dmi/id/product_name').read_text().strip()
     except OSError: hardware='Unknown'
-    report={'hardware':hardware,'steam_deck_detected':hardware in ('Jupiter','Galileo'),'hyprland':desktop.version,'hyprland_available':desktop.available,'omarchy':desktop.omarchy,'sdl2':bool(ctypes.util.find_library('SDL2')),'steam':bool(shutil.which('steam') or shutil.which('flatpak') and (Path.home()/'.var/app/com.valvesoftware.Steam').exists()),'wayland':bool(os.environ.get('WAYLAND_DISPLAY')),'partition_or_boot_changes':False}
+    report={'hardware':hardware,'steam_deck_detected':hardware in ('Jupiter','Galileo'),'hyprland':desktop.version,'hyprland_available':desktop.available,'omarchy':desktop.omarchy,'sdl2':bool(ctypes.util.find_library('SDL2') or ctypes.util.find_library('SDL2-2.0')),'steam':bool(shutil.which('steam') or shutil.which('flatpak') and (Path.home()/'.var/app/com.valvesoftware.Steam').exists()),'wayland':bool(os.environ.get('WAYLAND_DISPLAY')),'partition_or_boot_changes':False}
     try:
         from PySide6.QtCore import qVersion
         report['qt']=qVersion()
