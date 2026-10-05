@@ -39,7 +39,7 @@ Captures the startup, profiles, all sections, on-screen keyboard and largest tex
 
 ## Evidence from the development host
 
-2026-10-04: 32 automated test cases passed (including repeated controller base cases), compile checks and launcher syntax passed. Actual Hyprland 0.56.2 / Omarchy 4.0.4-1 smoke test passed native tiling, floating, focus, window move, workspace switching and return-to-console. The real SDL virtual-controller test and full-screen native shell smoke test also passed. The baseline GitHub Actions workflow passed on Ubuntu/Python 3.12. Qt 6.11.2 renders were visually inspected at 1280 × 800. Existing compositor reports no configuration errors; no compositor config was modified.
+2026-10-04: 36 automated test cases passed (including repeated controller base cases), compile checks and launcher syntax passed. Actual Hyprland 0.56.2 / Omarchy 4.0.4-1 smoke test passed native tiling, floating, focus, window move, workspace switching and return-to-console. The real SDL virtual-controller test and full-screen native shell smoke test also passed. The baseline GitHub Actions workflow passed on Ubuntu/Python 3.12. Qt 6.11.2 renders were visually inspected at 1280 × 800. Existing compositor reports no configuration errors; no compositor config was modified.
 
 The host is a ThinkPad, **not a Steam Deck**, and has no Steam client installed. This verifies code and real compositor integration; it does not certify the target device.
 
@@ -57,3 +57,7 @@ The host is a ThinkPad, **not a Steam Deck**, and has no Steam client installed.
 - [ ] Reboot existing OS, launch the shell again and verify profile persistence.
 
 TV and docked tests are deliberately deferred beyond Build 1. Partition and bootloader work remains excluded.
+
+## Startup runtime preflight
+
+`python3 -m omasteamdeck.runtime` verifies Qt Widgets, Qt WebEngine, Qt WebChannel and the executable QtWebEngineProcess helper. It does not initialize a GUI or test WebGL; the startup view must verify real rendering separately. Missing system WebEngine libraries were correctly reported on this development host. `./run.sh --help` and explicit `--skip-splash` remain available for native-only diagnostics. The Three.js view is supplied by the separate UI integration.
