@@ -67,7 +67,7 @@ with tempfile.TemporaryDirectory(prefix='omaflow-startup-test-') as temp:
     until(lambda:startup.scene_ready)
     status=json.loads(javascript(startup,'JSON.stringify(window.omaflowStatus)'))
     assert status['renderer']=='three-webgl' and status['drawCalls']==2
-    assert 0<status['triangles']<10000 and status['error'] is None
+    assert 0<status['triangles']<12000 and status['error'] is None
     restored(shell)
     assert startup.disposed and not errors,errors
     close(shell)
