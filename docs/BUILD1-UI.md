@@ -4,14 +4,14 @@ The `build1/ui` work started at Core baseline `718816a` and is prepared against 
 
 ## Logo review status
 
-The user confirmed **OmaFlow** as the final Build 1 name. The standalone **Confluence Loop** is a new provisional logo concept, replacing the superseded OH/OF monograms. Its continuous asymmetric ribbon expresses flow, continuity and separate paths joining. A vector source, small-size study and 3D study have been shown for review. It is implemented for startup preview, but must not be treated as the approved final identity until the user explicitly approves the logo. The rest of the reference-matched UI is ready for combined QA independently of this logo review.
+The user confirmed **OmaFlow** as the final Build 1 name. The previous OH/OF monograms and the Confluence Loop direction are superseded. The current standalone **Current** concept has three open paths flowing into one shared endpoint. Its flat, small-size and 3D studies are under user review. It is implemented only as a replaceable startup preview; it must not be treated as the approved final identity until the user explicitly approves the logo. The rest of the reference-matched UI is ready for combined QA independently of logo review.
 
 The repository, Python package, command and config paths retain their existing names. `QApplication.applicationName` retains the existing internal identifier. The visible native window title is **OmaFlow**, supported by Core compatibility commit `aef594b`, which accepts the current and legacy names while preserving strict PID matching. On-screen branding, dialogs, descriptive CLI text and help copy all use OmaFlow.
 
 ## Presentation
 
 - One-word **OmaFlow** branding throughout the native interface.
-- Perspective-projected, extruded Confluence Loop emblem with pearl surfaces, blue edge light, a horizon backdrop, opening indicator, staged wordmark reveal and 360 ms fade into profiles. A/Enter or B/Escape skips startup. Reduced motion disables animation; hidden logo/loading timers stop.
+- Perspective-projected, extruded Current emblem with pearl surfaces, blue edge light, a horizon backdrop, opening indicator, staged wordmark reveal and 360 ms fade into profiles. A/Enter or B/Escape skips startup. Reduced motion disables animation; hidden logo/loading timers stop.
 - Cinematic mountain backdrop, translucent dark panels, illustrated avatars, blue focus outlines, vertical navigation, four large home action tiles, and a separate recent/favorites shelf.
 - Home, Games, Media, Store, Library, Apps and Settings all use the existing catalog and actions. The initial home shelf says **Explore your Deck** until there are actual recent launches/favorites. Empty Games/Library screens offer real browse/open actions; no fictional installed titles or connected accounts are shown.
 - Local Steam cache artwork and desktop icon lookup fall back to offline vector artwork. No image downloads occur while using the app.

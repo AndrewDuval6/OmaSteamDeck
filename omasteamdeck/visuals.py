@@ -11,7 +11,7 @@ from pathlib import Path
 
 from PySide6.QtCore import Qt, QPointF, QRectF, QTimer, QElapsedTimer
 from PySide6.QtGui import (QColor, QFont, QIcon, QImageReader, QLinearGradient,
-    QPainter, QPainterPath, QPainterPathStroker, QTransform, QPen, QPixmap, QPolygonF, QRadialGradient)
+    QPainter, QPainterPath, QPainterPathStroker, QPen, QPixmap, QPolygonF, QRadialGradient)
 from PySide6.QtWidgets import QWidget, QPushButton, QSizePolicy
 
 # Product name confirmed by the user; emblem design remains under review.
@@ -194,26 +194,24 @@ def tile_art(p, rect, key, variant=0):
 
 
 def flow_contours():
-    """Confluence Loop concept: a continuous asymmetric ribbon, under review."""
-    center=QPainterPath(QPointF(90,80))
-    center.cubicTo(69,54,55,25,36,38); center.cubicTo(13,54,22,83,44,89)
-    center.cubicTo(68,96,91,71,106,45); center.cubicTo(121,21,147,31,153,52)
-    center.cubicTo(164,90,129,105,90,80); center.closeSubpath()
-    transform=QTransform(); transform.translate(90,90); transform.rotate(-28); transform.translate(-90,-80)
-    stroker=QPainterPathStroker(); stroker.setWidth(22)
+    """Current concept: three open paths join at one destination (under review)."""
+    stroker=QPainterPathStroker(); stroker.setWidth(19)
     stroker.setCapStyle(Qt.PenCapStyle.RoundCap); stroker.setJoinStyle(Qt.PenJoinStyle.RoundJoin)
-    path=transform.map(stroker.createStroke(center)).simplified()
-    return [[(point.x()/50,point.y()/50) for point in contour] for contour in path.toSubpathPolygons()]
+    path=QPainterPath()
+    for start,points in [(76,(80,76,76,35,145,35)),(110,(93,110,98,35,145,35)),(144,(116,144,120,35,145,35))]:
+        center=QPainterPath(QPointF(26,start)); center.cubicTo(*points)
+        path=path.united(stroker.createStroke(center))
+    return [[(point.x()/50,point.y()/50) for point in contour] for contour in path.simplified().toSubpathPolygons()]
 
 
 class Logo(QWidget):
-    """Perspective-extruded Confluence Loop concept; design pending user feedback."""
+    """Perspective-extruded Current concept; design pending user feedback."""
     def __init__(self,motion=True,parent=None):
         super().__init__(parent)
         self.motion=motion; self.angle=.4; self.contours=flow_contours()
         self.setMinimumSize(120,90)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
-        self.setAccessibleName('OmaFlow three-dimensional Confluence Loop concept')
+        self.setAccessibleName('OmaFlow three-dimensional Current concept')
         self.timer=QTimer(self); self.timer.timeout.connect(self.tick)
         self.timer.setInterval(33)
     def tick(self):
