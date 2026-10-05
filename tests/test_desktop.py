@@ -20,7 +20,7 @@ class DesktopTests(unittest.TestCase):
         with self.assertRaises(DesktopError): d.focus_workspace('1; exec evil')
         d.run.assert_not_called()
     def test_return_console_uses_own_pid_and_title(self):
-        for title in ('OmaHome','OmaSteamDeck'):
+        for title in ('OmaFlow','OmaHome','OmaSteamDeck'):
             with self.subTest(title=title):
                 d=self.adapter()
                 d.query=Mock(return_value=[{'address':'0xaaa','pid':4,'title':'Other'},{'address':'0xbbb','pid':5,'title':title},{'address':'0xccc','pid':4,'title':title}])

@@ -7,7 +7,7 @@ import shutil
 import subprocess
 
 # Visible branding may change independently of package and workspace identifiers.
-CONSOLE_TITLES = ('OmaHome', 'OmaSteamDeck')
+CONSOLE_TITLES = ('OmaFlow', 'OmaHome', 'OmaSteamDeck')
 
 WORKSPACES = {'Console':'osd-console', 'Play':'osd-play', 'Media':'osd-media', 'Desktop':'osd-desktop'}
 
