@@ -20,8 +20,12 @@ class DesktopTests(unittest.TestCase):
         with self.assertRaises(DesktopError): d.focus_workspace('1; exec evil')
         d.run.assert_not_called()
     def test_return_console_uses_own_pid_and_title(self):
-        d=self.adapter(); d.query=Mock(return_value=[{'address':'0xaaa','pid':4,'title':'Other'},{'address':'0xbbb','pid':5,'title':'OmaSteamDeck'},{'address':'0xccc','pid':4,'title':'OmaSteamDeck'}]); d.return_console(4)
-        self.assertIn('address:0xccc',d.run.call_args.args[1])
+        for title in ('OmaHome','OmaSteamDeck'):
+            with self.subTest(title=title):
+                d=self.adapter()
+                d.query=Mock(return_value=[{'address':'0xaaa','pid':4,'title':'Other'},{'address':'0xbbb','pid':5,'title':title},{'address':'0xccc','pid':4,'title':title}])
+                d.return_console(4)
+                self.assertIn('address:0xccc',d.run.call_args.args[1])
     def test_timeout_becomes_actionable_error(self):
         d=Desktop(enabled=False)
         with patch('omasteamdeck.desktop.subprocess.run',side_effect=subprocess.TimeoutExpired('hyprctl',2)):

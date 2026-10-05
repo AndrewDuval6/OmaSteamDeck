@@ -6,6 +6,9 @@ import re
 import shutil
 import subprocess
 
+# Visible branding may change independently of package and workspace identifiers.
+CONSOLE_TITLES = ('OmaHome', 'OmaSteamDeck')
+
 WORKSPACES = {'Console':'osd-console', 'Play':'osd-play', 'Media':'osd-media', 'Desktop':'osd-desktop'}
 
 class DesktopError(RuntimeError): pass
@@ -70,7 +73,7 @@ class Desktop:
         index=names.index(current) if current in names else 0
         self.focus_workspace(names[(index+delta)%len(names)])
     def shell_address(self,pid):
-        return next((c['address'] for c in self.query('clients') if c.get('pid')==pid and c.get('title')=='OmaSteamDeck'),None)
+        return next((c['address'] for c in self.query('clients') if c.get('pid')==pid and c.get('title') in CONSOLE_TITLES),None)
     def return_console(self,pid):
         address=self.shell_address(pid)
         if not address: raise DesktopError('Console window is not available yet.')

@@ -10,7 +10,7 @@ from PySide6.QtWidgets import QApplication, QPushButton
 from PySide6.QtTest import QTest
 from omasteamdeck.app import Shell, TABS
 from omasteamdeck.core import State
-from omasteamdeck.desktop import Desktop, WORKSPACES
+from omasteamdeck.desktop import Desktop, WORKSPACES, CONSOLE_TITLES
 
 app=QApplication([]); desktop=Desktop()
 if not desktop.available: raise SystemExit(desktop.reason)
@@ -34,7 +34,7 @@ with tempfile.TemporaryDirectory() as temp:
         QTimer.singleShot(80,pick_desktop); shell.workspaces(); QTest.qWait(150)
         assert desktop.query('activeworkspace')['name']==WORKSPACES['Desktop'],'Workspace picker failed to switch'
         shell.desktop_control('console'); QTest.qWait(100)
-        assert desktop.query('activewindow')['title']=='OmaSteamDeck','Return chord handler failed'
+        assert desktop.query('activewindow')['title'] in CONSOLE_TITLES,'Return chord handler failed'
         print('PASS: actual full-screen shell, animated startup, profiles, six sections, modal workspace picker, return-to-console.')
     finally:
         shell.close(); QTest.qWait(100)
