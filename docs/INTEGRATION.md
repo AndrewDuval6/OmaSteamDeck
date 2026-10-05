@@ -4,26 +4,26 @@ The review branch is **`build1/integration`**. Do not merge it into `main` until
 the combined build is reviewed and the physical Steam Deck acceptance checklist
 is completed. Development-host checks do not establish hardware acceptance.
 
-**Open startup requirement:** the user's latest brief requires Three.js with
-real geometry, materials, lighting and a camera. The currently integrated
-QPainter-projected startup does **not** satisfy that requirement. A separately
-tested UI startup commit is pending and must pass integration QA before this
-candidate can meet the updated Build 1 target.
+The startup uses actual offline **Three.js/WebGL2** geometry, materials,
+lighting and a perspective camera inside Qt WebEngine. Its completion or A/B
+skip returns to the native profile screen and disposes the renderer. This is
+the combined candidate for review and physical Steam Deck acceptance testing.
 
 ## Source branches
 
 - Core: `ae8f4c1` — native shell, SDL controls, Hyprland/Omarchy integration,
   discovery and launch, lifecycle hardening, native smoke tests and WebEngine
   runtime preflight with user-local dependency guidance.
-- UI: `58cdda3`, including `824c6b9` — reference-based handheld layout,
-  OmaFlow display name, readable wrapped titles and provisional startup symbol.
+- UI: `54e10ac`, including `d1801fc` — handheld layout, readable titles,
+  actual offline Three.js startup, safe input handoff, renderer disposal and
+  the provisional Open Flow symbol. The Lift alternative is review-only.
 
 Both workers' histories are retained. Integration fixes are limited to the
 combined experience and its verification.
 
-The visible product name is **OmaFlow**. The startup symbol remains a temporary
-review preview while the UI task develops the standalone flow/interconnection
-direction; no final logo approval is implied by this runnable checkpoint.
+The visible product name is **OmaFlow**. The Open Flow startup symbol remains
+provisional; final logo review belongs to the UI task. No final logo approval
+is implied by this runnable checkpoint.
 Repository, package, command and saved-data paths are unchanged. Core accepts
 OmaFlow and the earlier window titles while matching the shell's own process,
 preserving return-to-console behavior across the branding changes.
@@ -36,6 +36,10 @@ preserving return-to-console behavior across the branding changes.
   discovery, including returning from the destination workspace on failure.
 - Check the packaged application outside the repository, so source-checkout
   imports cannot mask missing package contents.
+- Initialize shared OpenGL contexts in the full-screen QA harness before
+  creating its application, matching the production WebEngine entry point.
+- Verify real SDL startup handoff and duplicate launches in the installed wheel.
+  Button sampling is acknowledged by SDL, and tests report lost desktop focus.
 
 ## Verification
 
@@ -56,6 +60,13 @@ baseline passes 55 automated cases and these additional checks:
 
 - Real SDL virtual-controller input through profile selection, all seven
   sections, D-pad focus, pin and back.
+- Real WebGL startup in native Wayland Qt WebEngine: automatic handoff,
+  Enter/Escape and real SDL A/B skip, restored native keyboard/controller/modal
+  input, reduced motion, close during load and a fresh second startup.
+- Browser scene checks: 10,508 triangles and two draw calls for the default
+  mark, completion/disposal, context-loss/unavailable-WebGL fallback, no remote
+  requests, resize and rendering guards. GitHub Actions runs this separately
+  from offscreen native tests.
 - Live full-screen startup, profile transition, all sections, modal workspace
   selection and return-to-console.
 - Pinning through a real native detail modal, followed by intact controller
@@ -64,7 +75,8 @@ baseline passes 55 automated cases and these additional checks:
   and recorded launch history.
 - Independent compositor smoke for tiling, floating, focus and workspaces.
 - Wheel installation outside the repository, bundled PNG loading and rendering
-  every section from the installed package.
+  every section from the installed package, plus the actual bundled WebGL scene,
+  real SDL A/B profile/modal handoff and single-instance behavior.
 - Visual inspection at 1280 × 800, including large text, eight profiles and
   detail dialogs. The capture harness explicitly restores offscreen focus after
   its modal screenshot; live compositor focus was separately verified.

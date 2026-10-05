@@ -3,6 +3,20 @@ on: [push, pull_request]
 permissions:
   contents: read
 jobs:
+  startup-webgl:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install isolated browser QA dependencies
+        run: |
+          npm install --prefix "$RUNNER_TEMP/startup-qa" --no-audit --no-fund --save-exact playwright@1.63.0
+          "$RUNNER_TEMP/startup-qa/node_modules/.bin/playwright" install --with-deps chromium
+      - name: Verify real WebGL startup and failure recovery
+        run: PLAYWRIGHT_MODULE="$RUNNER_TEMP/startup-qa/node_modules/playwright/index.mjs" node tools/check_startup.mjs
   native:
     runs-on: ubuntu-latest
     steps:

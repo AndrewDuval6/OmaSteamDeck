@@ -6,13 +6,14 @@ import sys
 import tempfile
 import time
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
-from PySide6.QtCore import QTimer
+from PySide6.QtCore import QTimer, Qt
 from PySide6.QtWidgets import QApplication, QPushButton
 from PySide6.QtTest import QTest
 from omasteamdeck.app import Shell, TABS
 from omasteamdeck.core import State
 from omasteamdeck.desktop import Desktop, WORKSPACES, CONSOLE_TITLES
 
+QApplication.setAttribute(Qt.ApplicationAttribute.AA_ShareOpenGLContexts)
 app=QApplication([]); desktop=Desktop()
 if not desktop.available: raise SystemExit(desktop.reason)
 original=desktop.query('activeworkspace'); focus=desktop.query('activewindow').get('address')
