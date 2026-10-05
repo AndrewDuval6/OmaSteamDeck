@@ -9,9 +9,9 @@ import hashlib
 import math
 from pathlib import Path
 
-from PySide6.QtCore import Qt, QPointF, QRectF, QTimer, QElapsedTimer
+from PySide6.QtCore import Qt, QPointF, QRectF, QTimer
 from PySide6.QtGui import (QColor, QFont, QIcon, QImageReader, QLinearGradient,
-    QPainter, QPainterPath, QPainterPathStroker, QTransform, QPen, QPixmap, QPolygonF, QRadialGradient)
+    QPainter, QPainterPath, QPen, QPixmap, QPolygonF, QRadialGradient)
 from PySide6.QtWidgets import QWidget, QPushButton, QSizePolicy
 
 # Product name confirmed by the user; emblem design remains under review.
@@ -193,85 +193,21 @@ def tile_art(p, rect, key, variant=0):
     p.restore()
 
 
-def flow_contours():
-    """Confluence Loop concept: a continuous asymmetric ribbon, under review."""
-    center=QPainterPath(QPointF(90,80))
-    center.cubicTo(69,54,55,25,36,38); center.cubicTo(13,54,22,83,44,89)
-    center.cubicTo(68,96,91,71,106,45); center.cubicTo(121,21,147,31,153,52)
-    center.cubicTo(164,90,129,105,90,80); center.closeSubpath()
-    transform=QTransform(); transform.translate(90,90); transform.rotate(-28); transform.translate(-90,-80)
-    stroker=QPainterPathStroker(); stroker.setWidth(22)
-    stroker.setCapStyle(Qt.PenCapStyle.RoundCap); stroker.setJoinStyle(Qt.PenJoinStyle.RoundJoin)
-    path=transform.map(stroker.createStroke(center)).simplified()
-    return [[(point.x()/50,point.y()/50) for point in contour] for contour in path.toSubpathPolygons()]
-
-
 class Logo(QWidget):
-    """Perspective-extruded Confluence Loop concept; design pending user feedback."""
+    """Static native icon. The startup's actual 3D renderer lives in startup.py."""
     def __init__(self,motion=True,parent=None):
         super().__init__(parent)
-        self.motion=motion; self.angle=.4; self.contours=flow_contours()
-        self.setMinimumSize(120,90)
+        from PySide6.QtSvg import QSvgRenderer
+        self.motion=False
+        self.timer=QTimer(self)  # Compatibility with Core reduced-motion checks.
+        self.renderer=QSvgRenderer(str(Path(__file__).with_name('assets')/'omaflow-mark.svg'),self)
+        self.setMinimumSize(40,40)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
-        self.setAccessibleName('OmaFlow three-dimensional Confluence Loop concept')
-        self.timer=QTimer(self); self.timer.timeout.connect(self.tick)
-        self.timer.setInterval(33)
-    def tick(self):
-        self.angle+=.026; self.update()
-    def showEvent(self,event):
-        if self.motion: self.timer.start()
-        super().showEvent(event)
-    def hideEvent(self,event):
-        self.timer.stop(); super().hideEvent(event)
+        self.setAccessibleName('OmaFlow Open Flow symbol — design preview')
     def paintEvent(self,event):
         p=QPainter(self); p.setRenderHint(QPainter.RenderHint.Antialiasing)
-        w,h=self.width(),self.height(); size=min(w/4.2,h/3.8)
-        yaw=-.18+math.sin(self.angle)*.35; pitch=.20+math.cos(self.angle*.7)*.10
-        def project(x,y,z):
-            x-=1.8; y-=1.8
-            rx=x*math.cos(yaw)+z*math.sin(yaw); rz=-x*math.sin(yaw)+z*math.cos(yaw)
-            ry=y*math.cos(pitch)-rz*math.sin(pitch); depth=y*math.sin(pitch)+rz*math.cos(pitch)
-            k=5/(5+depth)
-            return QPointF(w/2+rx*size*k,h/2+ry*size*k),depth
-        glow=QRadialGradient(w*.5,h*.5,min(w*.45,h*.49))
-        glow.setColorAt(0,color(MINT,32)); glow.setColorAt(1,color(MINT,0))
-        p.fillRect(self.rect(),glow)
-        p.setPen(Qt.PenStyle.NoPen)
-        p.setBrush(color('#000000',65)); p.drawEllipse(QRectF(w*.13,h*.79,w*.74,h*.07))
-        faces=[]
-        for contours in [self.contours]:
-            offset=0
-            for contour in contours:
-                for j,(x,y) in enumerate(contour):
-                    xx,yy=contour[(j+1)%len(contour)]
-                    vertices=[project(x+offset,y,0),project(xx+offset,yy,0),project(xx+offset,yy,.28),project(x+offset,y,.28)]
-                    faces.append((sum(v[1] for v in vertices)/4,QPolygonF([v[0] for v in vertices]),'#527b9c' if j%2 else '#b8cadd'))
-        for _,shape,tint in sorted(faces,key=lambda f:f[0],reverse=True):
-            p.setPen(QPen(color(tint).lighter(120),.8)); p.setBrush(color(tint)); p.drawPolygon(shape)
-        for contours in [self.contours]:
-            path=QPainterPath(); path.setFillRule(Qt.FillRule.OddEvenFill)
-            for contour in contours:
-                shape=[project(x,y,0)[0] for x,y in contour]
-                path.addPolygon(QPolygonF(shape)); path.closeSubpath()
-            front=QLinearGradient(0,h*.2,0,h*.8); front.setColorAt(0,color('#fff1ec')); front.setColorAt(.5,color('#dfe7ee')); front.setColorAt(1,color('#8097b1'))
-            p.setBrush(front); p.setPen(QPen(color('#f4f8ff'),1)); p.drawPath(path)
-
-
-class LoadingLine(QWidget):
-    def __init__(self,motion=True,parent=None):
-        super().__init__(parent); self.motion=motion; self.elapsed=QElapsedTimer(); self.elapsed.start()
-        self.setFixedSize(200,4); self.timer=QTimer(self); self.timer.setInterval(33); self.timer.timeout.connect(self.update)
-        self.setAccessibleName('Opening your space')
-    def showEvent(self,event):
-        if self.motion: self.timer.start()
-        super().showEvent(event)
-    def hideEvent(self,event):
-        self.timer.stop(); super().hideEvent(event)
-    def paintEvent(self,event):
-        p=QPainter(self); p.setRenderHint(QPainter.RenderHint.Antialiasing); p.setPen(Qt.PenStyle.NoPen)
-        p.setBrush(color('#273c49')); p.drawRoundedRect(QRectF(self.rect()),2,2)
-        progress=min(1,self.elapsed.elapsed()/1600) if self.motion else 1
-        p.setBrush(color(MINT)); p.drawRoundedRect(QRectF(0,0,self.width()*progress,4),2,2)
+        size=min(self.width(),self.height())
+        self.renderer.render(p,QRectF((self.width()-size)/2,(self.height()-size)/2,size,size))
 
 
 

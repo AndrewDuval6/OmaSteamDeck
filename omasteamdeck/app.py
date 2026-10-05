@@ -6,14 +6,14 @@ import os
 from pathlib import Path
 import subprocess
 import sys
-from PySide6.QtCore import Qt, QTimer, QEvent, QUrl, QProcess, QLockFile, QPropertyAnimation, QEasingCurve
+from PySide6.QtCore import Qt, QTimer, QEvent, QUrl, QProcess, QLockFile, QPropertyAnimation, QEasingCurve, Slot
 from PySide6.QtGui import QDesktopServices
 from PySide6.QtWidgets import (QApplication, QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QPushButton, QLabel, QScrollArea, QDialog, QLineEdit, QGraphicsOpacityEffect)
 from .core import State, Item, MEDIA, STORES, discover_apps, discover_games, desktop_command
 from .controller import Controller
 from .desktop import Desktop, DesktopError, WORKSPACES, omarchy_command
 
-from .visuals import DISPLAY_NAME, STYLE, Logo, Card, ProfileCard, LoadingLine, DetailArtwork, Backdrop, NavButton, CategoryCard
+from .visuals import DISPLAY_NAME, STYLE, Logo, Card, ProfileCard, DetailArtwork, Backdrop, NavButton, CategoryCard
 
 TABS = ['Home', 'Games', 'Media', 'Store', 'Library', 'Apps', 'Settings']
 
@@ -82,7 +82,7 @@ class Shell(Backdrop):
         else: self.showFullScreen()
         if skip_splash: self.show_profiles()
         else:
-            self.show_splash(); QTimer.singleShot(1800,self.finish_splash)
+            self.show_splash()
         if self.desktop.available: QTimer.singleShot(250,self.attach_desktop)
     @property
     def profile(self): return self.state.data['profiles'][self.profile_index]
@@ -94,6 +94,7 @@ class Shell(Backdrop):
         import re
         self.setStyleSheet(re.sub(r'font-size: (\d+)px',lambda m:f'font-size: {int(int(m[1])*scale)}px',STYLE))
     def clear(self):
+        self.root.setContentsMargins(34,28,34,20)
         while self.root.count():
             item=self.root.takeAt(0)
             if item.widget(): item.widget().hide(); item.widget().deleteLater()
@@ -105,35 +106,51 @@ class Shell(Backdrop):
             if item.widget(): item.widget().hide(); item.widget().deleteLater()
             elif item.layout(): self.clear_layout(item.layout())
     def show_splash(self):
-        self.clear(); self.page='splash'; self.update(); self.root.addStretch()
-        logo=Logo(self.state.data['motion']); logo.setFixedSize(540,260)
-        self.root.addWidget(logo,0,Qt.AlignmentFlag.AlignHCenter)
-        title=label(DISPLAY_NAME,'title'); title.setAlignment(Qt.AlignmentFlag.AlignCenter); self.root.addWidget(title)
-        if self.state.data['motion']:
-            effect=QGraphicsOpacityEffect(title); effect.setOpacity(0); title.setGraphicsEffect(effect)
-            reveal=QPropertyAnimation(effect,b'opacity',title); reveal.setDuration(480)
-            reveal.setStartValue(0.0); reveal.setEndValue(1.0); reveal.setEasingCurve(QEasingCurve.Type.OutCubic)
-            QTimer.singleShot(420,title,reveal.start)
-        sub=label('A LITTLE MACHINE.  A WHOLE WORLD.','eyebrow'); sub.setAlignment(Qt.AlignmentFlag.AlignCenter); self.root.addWidget(sub)
-        self.root.addSpacing(24)
-        self.root.addWidget(LoadingLine(self.state.data['motion']),0,Qt.AlignmentFlag.AlignHCenter)
-        self.root.addStretch()
-        hint=label('YOUR WORLD, IN YOUR HANDS.     ·     A / ENTER TO CONTINUE','muted'); hint.setAlignment(Qt.AlignmentFlag.AlignCenter); self.root.addWidget(hint)
+        self.clear(); self.page='splash'; self.update(); self.startup=None
+        # Only the startup is web-rendered; profiles and every action remain native.
+        try:
+            if QApplication.platformName()=='offscreen' and os.environ.get('OMAFLOW_TEST_WEBENGINE')!='1':
+                raise ImportError('Native-only test surface')
+            from .startup import StartupView
+            # PySide6 6.11 can recursively wrap private Qt Quick focus objects
+            # through an application-wide Python filter. Limit keyboard handling
+            # to this window while WebEngine lives; Core controller polling stays
+            # active, and the page also handles Enter/Escape via its narrow bridge.
+            QApplication.instance().removeEventFilter(self)
+            self.installEventFilter(self)
+            self.startup=StartupView(self.state.data['motion'],self)
+            self.startup.destroyed.connect(self.resume_native_input,Qt.ConnectionType.QueuedConnection)
+        except ImportError:
+            self.resume_native_input()
+            # Explicit native-only development path. No imitation 3D animation.
+            self.root.addStretch(); title=label(DISPLAY_NAME,'title'); title.setAlignment(Qt.AlignmentFlag.AlignCenter); self.root.addWidget(title)
+            hint=label('A / ENTER  Continue','muted'); hint.setAlignment(Qt.AlignmentFlag.AlignCenter); self.root.addWidget(hint); self.root.addStretch()
+            QTimer.singleShot(900,title,self.finish_splash)
+            return
+        self.root.setContentsMargins(0,0,0,0); self.root.addWidget(self.startup)
+        self.startup.finished.connect(self.finish_splash)
+        self.startup.failed.connect(lambda message:print(message,file=sys.stderr))
+    @Slot()
+    def resume_native_input(self):
+        # Queued until the browser's private children have also been destroyed.
+        self.removeEventFilter(self)
+        if self.poll_timer.isActive(): QApplication.instance().installEventFilter(self)
     def finish_splash(self):
         if self.page!='splash': return
-        # Capture the completed splash, then fade it over the ready profile view.
-        # This never delays input or allocates a GPU/embedded browser surface.
-        frame=self.grab() if self.state.data['motion'] else None
+        if getattr(self,'startup',None): self.startup.dispose()
         self.show_profiles()
-        if frame is not None:
-            self.transition=QLabel(self); self.transition.setPixmap(frame); self.transition.setGeometry(self.rect())
-            self.transition.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
-            self.transition.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-            effect=QGraphicsOpacityEffect(self.transition); self.transition.setGraphicsEffect(effect)
-            animation=QPropertyAnimation(effect,b'opacity',self.transition); animation.setDuration(360)
+        if self.state.data['motion']:
+            # The WebGL scene fades to this same color before native profiles appear.
+            overlay=QLabel(self); overlay.setStyleSheet('background: #03070c;'); overlay.setGeometry(self.rect())
+            overlay.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents); overlay.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+            self.transition=overlay
+            effect=QGraphicsOpacityEffect(overlay); overlay.setGraphicsEffect(effect)
+            animation=QPropertyAnimation(effect,b'opacity',overlay); animation.setDuration(320)
             animation.setStartValue(1.0); animation.setEndValue(0.0); animation.setEasingCurve(QEasingCurve.Type.OutCubic)
-            animation.finished.connect(self.transition.deleteLater)
-            self.transition.show(); animation.start()
+            def completed():
+                overlay.deleteLater()
+                if getattr(self,'transition',None) is overlay:self.transition=None
+            animation.finished.connect(completed); overlay.show(); animation.start()
     def show_profiles(self):
         self.clear(); self.page='profiles'; self.query=''; self.update()
         top=QHBoxLayout(); top.addWidget(label(DISPLAY_NAME,'brand')); top.addStretch(); top.addWidget(label(self.status_text(),'muted')); self.root.addLayout(top)
@@ -529,6 +546,7 @@ def main():
     parser=argparse.ArgumentParser(description=DISPLAY_NAME+' native handheld shell')
     parser.add_argument('--windowed',action='store_true'); parser.add_argument('--skip-splash',action='store_true'); parser.add_argument('--config',type=Path,help='Alternative state file for testing')
     args=parser.parse_args()
+    QApplication.setAttribute(Qt.ApplicationAttribute.AA_ShareOpenGLContexts)
     app=QApplication(sys.argv[:1]); app.setApplicationName('OmaSteamDeck')
     state=State(args.config)
     try: state.path.parent.mkdir(parents=True,exist_ok=True)
