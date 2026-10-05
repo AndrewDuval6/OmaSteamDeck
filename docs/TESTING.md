@@ -29,6 +29,19 @@ The input test uses an actual SDL virtual gamepad and polls the real native shel
 
 The shell test is opt-in and runs in the live Hyprland session with temporary profile data. It verifies full-screen startup, automatic profile transition, all sections, the modal workspace picker and return-to-console, then restores focus. It uses the shell's named OSD workspaces and never edits compositor configuration.
 
+## Live application integration (opt-in)
+
+```bash
+python3 tools/smoke_launch.py
+```
+
+Run inside Hyprland with no windows occupying the named OSD workspaces. Starts
+the full-screen shell with temporary profile data, discovers two temporary
+desktop entries, launches their real native windows through the shell, verifies
+desktop workspace placement, tiling, moving to Play and back, return to console,
+and launch history. Closes only its own windows/processes and restores the
+previously focused window. No persistent desktop configuration is changed.
+
 ## Visual inspection
 
 ```bash
