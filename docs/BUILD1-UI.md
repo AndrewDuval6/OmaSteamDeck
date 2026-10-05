@@ -1,23 +1,23 @@
 # Build 1 UI integration handoff
 
-The `build1/ui` work started at Core baseline `718816a` and is prepared against Core `0c337c6`, which supports the OmaHome window title. It adds the native visual presentation requested by the user, governed by their three-panel reference render (startup, profile selection, home). No partition, bootloader, Omarchy configuration, workspace backend, controller backend, or launch implementation is changed.
+The `build1/ui` work started at Core baseline `718816a` and is prepared against Core `aef594b`, which supports the OmaFlow window title. It adds the native visual presentation requested by the user, governed by their three-panel reference render (startup, profile selection, home). No partition, bootloader, Omarchy configuration, workspace backend, controller backend, or launch implementation is changed.
 
 ## Logo review status
 
-The visible product name is **OmaHome**. Connected OH Concept 01 is a provisional review draft, shown to the user with a vector source, small-size study and 3D study. It is implemented for startup preview, but must not be treated as the approved final identity until the user responds. The rest of the reference-matched UI is ready for combined QA independently of this logo review.
+The user confirmed **OmaFlow** as the final Build 1 name. The standalone **Confluence Loop** is a new provisional logo concept, replacing the superseded OH/OF monograms. Its continuous asymmetric ribbon expresses flow, continuity and separate paths joining. A vector source, small-size study and 3D study have been shown for review. It is implemented for startup preview, but must not be treated as the approved final identity until the user explicitly approves the logo. The rest of the reference-matched UI is ready for combined QA independently of this logo review.
 
-The repository, Python package, command and config paths retain their existing names. `QApplication.applicationName` retains the existing internal identifier. The visible native window title is **OmaHome**, supported by Core compatibility commit `0c337c6`, which accepts both names while preserving strict PID matching. On-screen branding, dialogs, descriptive CLI text and help copy all use OmaHome.
+The repository, Python package, command and config paths retain their existing names. `QApplication.applicationName` retains the existing internal identifier. The visible native window title is **OmaFlow**, supported by Core compatibility commit `aef594b`, which accepts the current and legacy names while preserving strict PID matching. On-screen branding, dialogs, descriptive CLI text and help copy all use OmaFlow.
 
 ## Presentation
 
-- One-word **OmaHome** branding throughout the native interface.
-- Perspective-projected, extruded OH monogram with pearl surfaces, blue edge light, a horizon backdrop, opening indicator and 360 ms fade into profiles. A/Enter or B/Escape skips startup. Reduced motion disables animation; hidden logo/loading timers stop.
+- One-word **OmaFlow** branding throughout the native interface.
+- Perspective-projected, extruded Confluence Loop emblem with pearl surfaces, blue edge light, a horizon backdrop, opening indicator, staged wordmark reveal and 360 ms fade into profiles. A/Enter or B/Escape skips startup. Reduced motion disables animation; hidden logo/loading timers stop.
 - Cinematic mountain backdrop, translucent dark panels, illustrated avatars, blue focus outlines, vertical navigation, four large home action tiles, and a separate recent/favorites shelf.
 - Home, Games, Media, Store, Library, Apps and Settings all use the existing catalog and actions. The initial home shelf says **Explore your Deck** until there are actual recent launches/favorites. Empty Games/Library screens offer real browse/open actions; no fictional installed titles or connected accounts are shown.
 - Local Steam cache artwork and desktop icon lookup fall back to offline vector artwork. No image downloads occur while using the app.
 - Native graphical detail dialogs retain Core's launch and pin callbacks.
 
-The reference's spaced “OMA STEAM DECK” lettering is intentionally replaced by the user-required one-word branding and 3D OH mark. Background and avatars are original; native controls are not a screenshot of the reference. Avatars are assigned by profile position in this build; there is no avatar customization/storage change.
+The reference's spaced “OMA STEAM DECK” lettering is intentionally replaced by the user-required one-word branding and 3D flow mark. Background and avatars are original; native controls are not a screenshot of the reference. Avatars are assigned by profile position in this build; there is no avatar customization/storage change.
 
 ## Integration boundaries
 
@@ -39,7 +39,7 @@ python tools/capture_visuals.py work/visuals
 python -m pip wheel --no-deps --no-build-isolation --wheel-dir work/wheels .
 ```
 
-41 tests pass on Core `0c337c6`: 32 existing Core/UI tests and 9 added visual/navigation regressions. Added coverage includes sidebar/category navigation, all seven sections and bumper wraparound, real shortcut destinations, search/favorites, eight-profile scrolling/Exit, 130% text/long names at 1280×800, splash skip/fade, reduced motion, hidden animation timers, corrupt desktop icon metadata, and cached Steam art loading. The wheel includes the visual module and background PNG.
+41 tests pass on Core `aef594b`: 32 existing Core/UI tests and 9 added visual/navigation regressions. Added coverage includes sidebar/category navigation, all seven sections and bumper wraparound, real shortcut destinations, search/favorites, eight-profile scrolling/Exit, 130% text/long names at 1280×800, splash skip/fade, reduced motion, hidden animation timers, corrupt desktop icon metadata, and cached Steam art loading. The wheel includes the visual module and background PNG.
 
 `tools/capture_visuals.py` renders startup, transition, profiles, all seven sections, detail dialog and 130% text variants using disposable state. It discovers real installed apps, but intentionally uses an empty game catalog to verify useful empty states. Eight-profile screenshots are disposable QA fixtures, not default accounts.
 
@@ -47,7 +47,7 @@ Physical Steam Deck controls, OLED/LCD color/contrast, touch comfort and on-devi
 
 ## Artwork provenance
 
-The mountain asset was created with the built-in image-generation tool, copied into `omasteamdeck/assets/mountain-dusk.png`, and is distributed with the UI. The attached user render informed layout, palette and hierarchy; its interface was not flattened into the application. All icons, avatars, service panels, focus frames, horizon and OH geometry are drawn by Qt code.
+The mountain asset was created with the built-in image-generation tool, copied into `omasteamdeck/assets/mountain-dusk.png`, and is distributed with the UI. The attached user render informed layout, palette and hierarchy; its interface was not flattened into the application. All icons, avatars, service panels, focus frames, horizon and flow-emblem geometry are drawn by Qt code.
 
 Final generation prompt:
 

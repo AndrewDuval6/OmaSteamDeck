@@ -1,4 +1,4 @@
-"""OmaHome native handheld shell. No web server or elevated privileges."""
+"""OmaFlow native handheld shell. No web server or elevated privileges."""
 from __future__ import annotations
 import argparse
 import os
@@ -108,6 +108,11 @@ class Shell(Backdrop):
         logo=Logo(self.state.data['motion']); logo.setFixedSize(540,260)
         self.root.addWidget(logo,0,Qt.AlignmentFlag.AlignHCenter)
         title=label(DISPLAY_NAME,'title'); title.setAlignment(Qt.AlignmentFlag.AlignCenter); self.root.addWidget(title)
+        if self.state.data['motion']:
+            effect=QGraphicsOpacityEffect(title); effect.setOpacity(0); title.setGraphicsEffect(effect)
+            reveal=QPropertyAnimation(effect,b'opacity',title); reveal.setDuration(480)
+            reveal.setStartValue(0.0); reveal.setEndValue(1.0); reveal.setEasingCurve(QEasingCurve.Type.OutCubic)
+            QTimer.singleShot(420,title,reveal.start)
         sub=label('A LITTLE MACHINE.  A WHOLE WORLD.','eyebrow'); sub.setAlignment(Qt.AlignmentFlag.AlignCenter); self.root.addWidget(sub)
         self.root.addSpacing(24)
         self.root.addWidget(LoadingLine(self.state.data['motion']),0,Qt.AlignmentFlag.AlignHCenter)
@@ -231,7 +236,7 @@ class Shell(Backdrop):
                 card=Card(('★ ' if item.id in self.profile['favorites'] else '')+item.name,item.subtitle,item.icon,i,lambda checked=False,v=item:self.details(v),self.state.data['scale']/100)
                 card.item=item; card.setMinimumHeight(round(176*self.state.data['scale']/100)); self.grid.addWidget(card,2,i); self.cards.append(card)
         elif self.tab=='Settings':
-            entries=[('Desktop & workspaces','Omarchy + Hyprland' if self.desktop.available else 'Session setup needed',self.workspaces),('Sound & brightness','Handheld quick controls',self.quick_controls),('Omarchy tools','Files, terminal & system menu',self.omarchy_tools),('Display', 'Full screen' if self.isFullScreen() else 'Windowed',self.toggle_fullscreen),('Motion','Animated logo' if self.state.data['motion'] else 'Reduced motion',self.toggle_motion),('Text size',str(self.state.data['scale'])+'%',self.toggle_scale),('Profiles','Switch or create a profile',self.show_profiles),('Rename profile',self.profile['name'],self.rename),('Controller help','Controls & Steam Deck setup',self.help),('About',DISPLAY_NAME+' · Build 1',self.about),('Exit to desktop','Close OmaHome',self.close)]
+            entries=[('Desktop & workspaces','Omarchy + Hyprland' if self.desktop.available else 'Session setup needed',self.workspaces),('Sound & brightness','Handheld quick controls',self.quick_controls),('Omarchy tools','Files, terminal & system menu',self.omarchy_tools),('Display', 'Full screen' if self.isFullScreen() else 'Windowed',self.toggle_fullscreen),('Motion','Animated logo' if self.state.data['motion'] else 'Reduced motion',self.toggle_motion),('Text size',str(self.state.data['scale'])+'%',self.toggle_scale),('Profiles','Switch or create a profile',self.show_profiles),('Rename profile',self.profile['name'],self.rename),('Controller help','Controls & Steam Deck setup',self.help),('About',DISPLAY_NAME+' · Build 1',self.about),('Exit to desktop','Close OmaFlow',self.close)]
             self.section.setText('PREFERENCES')
             for title,subtitle,callback in entries: self.add_card(title,subtitle,'⚙',callback)
         else:
@@ -333,7 +338,7 @@ class Shell(Backdrop):
     def info(self,title,text):
         d=QDialog(self); d.setWindowTitle(title); d.setMinimumWidth(650); layout=QVBoxLayout(d); layout.setContentsMargins(28,24,28,24); layout.setSpacing(20)
         layout.addWidget(label(title,'title')); body=label(text,'muted'); body.setWordWrap(True); layout.addWidget(body); b=button('Got it',d.accept); layout.addWidget(b); b.setFocus(); d.exec()
-    def help(self): self.info('Every control, within reach.','D-pad / left stick: move · A / Enter: choose · B / Esc: back\nX / F: pin · Y / /: search · LB / RB: sections\nStart / F1: Settings · View / F2: workspaces\nF11: full screen · Alt+F4: exit\n\nWhile in Hyprland, hold View (Back):\n+ Start: return to the console from any app\n+ D-pad: focus a tiled window\n+ LB / RB: switch OmaHome workspaces\n+ X: tile the focused app · + Y: move it to Desktop\n\nIn Steam Input, select Gamepad (not keyboard emulation) to expose these controls. Trackpads or touch operate desktop apps. The shell does not intercept normal gameplay input. Steam may reserve the Guide button; View + Start is the fallback.')
+    def help(self): self.info('Every control, within reach.','D-pad / left stick: move · A / Enter: choose · B / Esc: back\nX / F: pin · Y / /: search · LB / RB: sections\nStart / F1: Settings · View / F2: workspaces\nF11: full screen · Alt+F4: exit\n\nWhile in Hyprland, hold View (Back):\n+ Start: return to the console from any app\n+ D-pad: focus a tiled window\n+ LB / RB: switch OmaFlow workspaces\n+ X: tile the focused app · + Y: move it to Desktop\n\nIn Steam Input, select Gamepad (not keyboard emulation) to expose these controls. Trackpads or touch operate desktop apps. The shell does not intercept normal gameplay input. Steam may reserve the Guide button; View + Start is the fallback.')
     def about(self): self.info(DISPLAY_NAME+' · Build 1','Native handheld console + Omarchy desktop, built for Steam Deck at 1280 × 800.\n\nHyprland: '+self.desktop.version+'\nOmarchy: '+('Detected' if self.desktop.omarchy else 'Not detected')+'\n\nProfiles keep favorites and recent launch requests locally; they are not separate OS accounts. Games use Steam, apps use desktop launchers, and media / stores open in your browser.\n\nNo partitioning, bootloader changes or automatic OS installation. TV and docked optimization comes later. Not affiliated with Valve or Omarchy.')
     def attach_desktop(self):
         try:

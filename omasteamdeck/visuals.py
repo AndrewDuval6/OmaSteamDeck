@@ -11,11 +11,11 @@ from pathlib import Path
 
 from PySide6.QtCore import Qt, QPointF, QRectF, QTimer, QElapsedTimer
 from PySide6.QtGui import (QColor, QFont, QIcon, QImageReader, QLinearGradient,
-    QPainter, QPainterPath, QPen, QPixmap, QPolygonF, QRadialGradient)
+    QPainter, QPainterPath, QPainterPathStroker, QTransform, QPen, QPixmap, QPolygonF, QRadialGradient)
 from PySide6.QtWidgets import QWidget, QPushButton, QSizePolicy
 
-# Provisional display identity; the user is still deciding the final name/logo.
-DISPLAY_NAME = 'OmaHome'
+# Product name confirmed by the user; emblem design remains under review.
+DISPLAY_NAME = 'OmaFlow'
 INK = '#070b10'
 MINT = '#9bd4ff'  # Shared focus color; name retained for existing drawing helpers.
 PALETTES = [('#183d48','#5d9d9b','#e6c8a0'), ('#292d59','#888bc1','#edbdaa'),
@@ -193,25 +193,27 @@ def tile_art(p, rect, key, variant=0):
     p.restore()
 
 
-def oh_contours():
-    """Concept 01: one continuous O frame and shared H bridge (under review)."""
-    path=QPainterPath(); path.setFillRule(Qt.FillRule.OddEvenFill)
-    path.addRoundedRect(QRectF(16,16,128,128),32,32)
-    top=QPainterPath(QPointF(52,37)); top.lineTo(108,37); top.quadTo(123,37,123,52)
-    top.lineTo(123,69); top.lineTo(37,69); top.lineTo(37,52); top.quadTo(37,37,52,37); top.closeSubpath(); path.addPath(top)
-    bottom=QPainterPath(QPointF(37,91)); bottom.lineTo(123,91); bottom.lineTo(123,108)
-    bottom.quadTo(123,123,108,123); bottom.lineTo(52,123); bottom.quadTo(37,123,37,108); bottom.closeSubpath(); path.addPath(bottom)
+def flow_contours():
+    """Confluence Loop concept: a continuous asymmetric ribbon, under review."""
+    center=QPainterPath(QPointF(90,80))
+    center.cubicTo(69,54,55,25,36,38); center.cubicTo(13,54,22,83,44,89)
+    center.cubicTo(68,96,91,71,106,45); center.cubicTo(121,21,147,31,153,52)
+    center.cubicTo(164,90,129,105,90,80); center.closeSubpath()
+    transform=QTransform(); transform.translate(90,90); transform.rotate(-28); transform.translate(-90,-80)
+    stroker=QPainterPathStroker(); stroker.setWidth(22)
+    stroker.setCapStyle(Qt.PenCapStyle.RoundCap); stroker.setJoinStyle(Qt.PenJoinStyle.RoundJoin)
+    path=transform.map(stroker.createStroke(center)).simplified()
     return [[(point.x()/50,point.y()/50) for point in contour] for contour in path.toSubpathPolygons()]
 
 
 class Logo(QWidget):
-    """Perspective-extruded connected OH concept; design pending user feedback."""
+    """Perspective-extruded Confluence Loop concept; design pending user feedback."""
     def __init__(self,motion=True,parent=None):
         super().__init__(parent)
-        self.motion=motion; self.angle=.4; self.contours=oh_contours()
+        self.motion=motion; self.angle=.4; self.contours=flow_contours()
         self.setMinimumSize(120,90)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
-        self.setAccessibleName('OmaHome OH three-dimensional monogram')
+        self.setAccessibleName('OmaFlow three-dimensional Confluence Loop concept')
         self.timer=QTimer(self); self.timer.timeout.connect(self.tick)
         self.timer.setInterval(33)
     def tick(self):
@@ -226,7 +228,7 @@ class Logo(QWidget):
         w,h=self.width(),self.height(); size=min(w/4.2,h/3.8)
         yaw=-.18+math.sin(self.angle)*.35; pitch=.20+math.cos(self.angle*.7)*.10
         def project(x,y,z):
-            x-=1.6; y-=1.6
+            x-=1.8; y-=1.8
             rx=x*math.cos(yaw)+z*math.sin(yaw); rz=-x*math.sin(yaw)+z*math.cos(yaw)
             ry=y*math.cos(pitch)-rz*math.sin(pitch); depth=y*math.sin(pitch)+rz*math.cos(pitch)
             k=5/(5+depth)
@@ -445,7 +447,7 @@ class Backdrop(QWidget):
         if getattr(self,'page','splash')=='splash':
             w,h=self.width(),self.height(); glow=QRadialGradient(w*.5,h*.71,w*.43)
             glow.setColorAt(0,color('#345f7e',135)); glow.setColorAt(.35,color('#122a3e',85)); glow.setColorAt(1,color('#02060c',0)); p.fillRect(self.rect(),glow)
-            # The illuminated planetary horizon from the reference, under the OH emblem.
+            # The illuminated planetary horizon from the reference, under the flow emblem.
             ellipse=QRectF(-w*.17,h*.70,w*1.34,h*1.2)
             p.setBrush(color('#030810')); p.setPen(QPen(color('#8fc9f1',20),18)); p.drawEllipse(ellipse)
             p.setPen(QPen(color('#9bdbff',40),6)); p.drawEllipse(ellipse)
