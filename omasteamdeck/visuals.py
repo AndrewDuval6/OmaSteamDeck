@@ -11,9 +11,11 @@ from pathlib import Path
 
 from PySide6.QtCore import Qt, QPointF, QRectF, QTimer, QElapsedTimer
 from PySide6.QtGui import (QColor, QFont, QIcon, QImageReader, QLinearGradient,
-    QPainter, QPainterPath, QPen, QPixmap, QPolygonF, QRadialGradient)
+    QPainter, QPainterPath, QPainterPathStroker, QTransform, QPen, QPixmap, QPolygonF, QRadialGradient)
 from PySide6.QtWidgets import QWidget, QPushButton, QSizePolicy
 
+# Product name confirmed by the user; emblem design remains under review.
+DISPLAY_NAME = 'OmaFlow'
 INK = '#070b10'
 MINT = '#9bd4ff'  # Shared focus color; name retained for existing drawing helpers.
 PALETTES = [('#183d48','#5d9d9b','#e6c8a0'), ('#292d59','#888bc1','#edbdaa'),
@@ -191,25 +193,27 @@ def tile_art(p, rect, key, variant=0):
     p.restore()
 
 
-def oh_contours():
-    """Concept 01: one continuous O frame and shared H bridge (under review)."""
-    path=QPainterPath(); path.setFillRule(Qt.FillRule.OddEvenFill)
-    path.addRoundedRect(QRectF(16,16,128,128),32,32)
-    top=QPainterPath(QPointF(52,37)); top.lineTo(108,37); top.quadTo(123,37,123,52)
-    top.lineTo(123,69); top.lineTo(37,69); top.lineTo(37,52); top.quadTo(37,37,52,37); top.closeSubpath(); path.addPath(top)
-    bottom=QPainterPath(QPointF(37,91)); bottom.lineTo(123,91); bottom.lineTo(123,108)
-    bottom.quadTo(123,123,108,123); bottom.lineTo(52,123); bottom.quadTo(37,123,37,108); bottom.closeSubpath(); path.addPath(bottom)
+def flow_contours():
+    """Confluence Loop concept: a continuous asymmetric ribbon, under review."""
+    center=QPainterPath(QPointF(90,80))
+    center.cubicTo(69,54,55,25,36,38); center.cubicTo(13,54,22,83,44,89)
+    center.cubicTo(68,96,91,71,106,45); center.cubicTo(121,21,147,31,153,52)
+    center.cubicTo(164,90,129,105,90,80); center.closeSubpath()
+    transform=QTransform(); transform.translate(90,90); transform.rotate(-28); transform.translate(-90,-80)
+    stroker=QPainterPathStroker(); stroker.setWidth(22)
+    stroker.setCapStyle(Qt.PenCapStyle.RoundCap); stroker.setJoinStyle(Qt.PenJoinStyle.RoundJoin)
+    path=transform.map(stroker.createStroke(center)).simplified()
     return [[(point.x()/50,point.y()/50) for point in contour] for contour in path.toSubpathPolygons()]
 
 
 class Logo(QWidget):
-    """Perspective-extruded connected OH concept; design pending user feedback."""
+    """Perspective-extruded Confluence Loop concept; design pending user feedback."""
     def __init__(self,motion=True,parent=None):
         super().__init__(parent)
-        self.motion=motion; self.angle=.4; self.contours=oh_contours()
+        self.motion=motion; self.angle=.4; self.contours=flow_contours()
         self.setMinimumSize(120,90)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
-        self.setAccessibleName('OmaHome OH three-dimensional monogram')
+        self.setAccessibleName('OmaFlow three-dimensional Confluence Loop concept')
         self.timer=QTimer(self); self.timer.timeout.connect(self.tick)
         self.timer.setInterval(33)
     def tick(self):
@@ -224,7 +228,7 @@ class Logo(QWidget):
         w,h=self.width(),self.height(); size=min(w/4.2,h/3.8)
         yaw=-.18+math.sin(self.angle)*.35; pitch=.20+math.cos(self.angle*.7)*.10
         def project(x,y,z):
-            x-=1.6; y-=1.6
+            x-=1.8; y-=1.8
             rx=x*math.cos(yaw)+z*math.sin(yaw); rz=-x*math.sin(yaw)+z*math.cos(yaw)
             ry=y*math.cos(pitch)-rz*math.sin(pitch); depth=y*math.sin(pitch)+rz*math.cos(pitch)
             k=5/(5+depth)
@@ -298,6 +302,16 @@ def local_art(item):
     return QPixmap()
 
 
+def title_lines(text,metrics,width):
+    """At most two readable title lines; the full name remains accessible."""
+    if metrics.horizontalAdvance(text)<=width: return [text]
+    words=text.split(); first=[]
+    while words and metrics.horizontalAdvance(' '.join(first+[words[0]]))<=width:
+        first.append(words.pop(0))
+    if not first: return [metrics.elidedText(text,Qt.TextElideMode.ElideRight,width)]
+    return [' '.join(first),metrics.elidedText(' '.join(words),Qt.TextElideMode.ElideRight,width)]
+
+
 class Card(QPushButton):
     def __init__(self,title,subtitle,icon,index,callback,scale=1):
         super().__init__(); self.title=title; self.subtitle=subtitle; self.icon=icon; self.scale=scale; self.index=index
@@ -315,7 +329,7 @@ class Card(QPushButton):
         p=QPainter(self); p.setRenderHint(QPainter.RenderHint.Antialiasing)
         rect=QRectF(self.rect()).adjusted(3,3,-3,-3); clip=QPainterPath(); clip.addRoundedRect(rect,15,15); p.setClipPath(clip)
         name=self.title.removeprefix('★ '); key=self.item.id if self.item else name.lower()
-        art_height=self.height()-round(76*self.scale)
+        art_height=self.height()-round(88*self.scale)
         art_rect=QRectF(3,3,self.width()-6,art_height)
         tile_art(p,art_rect,key,self.variant)
         if not self.art.isNull() and self.item and self.item.kind!='app':
@@ -323,7 +337,7 @@ class Card(QPushButton):
             p.drawPixmap(art_rect,scaled,QRectF((scaled.width()-art_rect.width())/2,(scaled.height()-art_rect.height())/2,art_rect.width(),art_rect.height()))
         else:
             p.fillRect(art_rect,color('#091321',80))
-            size=54*self.scale; icon_rect=QRectF(22,19,size,size)
+            size=min(54*self.scale,max(28*self.scale,art_height-50*self.scale)); icon_rect=QRectF(22,19,size,size)
             if not self.art.isNull(): p.drawPixmap(icon_rect,self.art,QRectF(self.art.rect()))
             else: symbol(p,icon_rect,key,'#f0f8f5')
             # Editorial category label, real source rather than fictional game metadata.
@@ -333,11 +347,12 @@ class Card(QPushButton):
             p.setFont(font(10*self.scale,True)); p.setPen(color('#e1efeb')); p.drawText(QRectF(22,art_height-26,self.width()-44,20),Qt.AlignmentFlag.AlignLeft,tag)
         p.fillRect(QRectF(3,art_height,self.width()-6,self.height()-art_height),color('#1b2b3f' if self.hasFocus() else '#101a27',238))
         p.setPen(color('#f3f6f7')); p.setFont(font(17*self.scale,True))
-        p.drawText(19,self.height()-round(43*self.scale),p.fontMetrics().elidedText(self.title,Qt.TextElideMode.ElideRight,self.width()-38))
+        lines=title_lines(self.title,p.fontMetrics(),self.width()-38)
+        first=self.height()-round((52 if len(lines)>1 else 41)*self.scale)
+        for number,line in enumerate(lines): p.drawText(19,first+round(number*21*self.scale),line)
         p.setFont(font(12*self.scale)); p.setPen(color('#b6c6d3'))
-        p.drawText(19,self.height()-round(20*self.scale),p.fontMetrics().elidedText(self.subtitle,Qt.TextElideMode.ElideRight,self.width()-38))
-        p.setClipping(False); p.setBrush(Qt.BrushStyle.NoBrush)
-        p.setPen(QPen(color(MINT if self.hasFocus() else '#607582'),3 if self.hasFocus() else .8)); p.drawRoundedRect(rect,15,15)
+        p.drawText(19,self.height()-round(13*self.scale),p.fontMetrics().elidedText(self.subtitle,Qt.TextElideMode.ElideRight,self.width()-38))
+        p.setClipping(False); focus_frame(p,rect,self.hasFocus(),15)
         if self.hasFocus():
             p.setPen(Qt.PenStyle.NoPen); p.setBrush(color(MINT)); p.drawRoundedRect(QRectF(self.width()-43,12,28,26),7,7)
             p.setPen(color('#122e49')); p.setFont(font(13,True)); p.drawText(QRectF(self.width()-43,12,28,26),Qt.AlignmentFlag.AlignCenter,'A')
@@ -432,7 +447,7 @@ class Backdrop(QWidget):
         if getattr(self,'page','splash')=='splash':
             w,h=self.width(),self.height(); glow=QRadialGradient(w*.5,h*.71,w*.43)
             glow.setColorAt(0,color('#345f7e',135)); glow.setColorAt(.35,color('#122a3e',85)); glow.setColorAt(1,color('#02060c',0)); p.fillRect(self.rect(),glow)
-            # The illuminated planetary horizon from the reference, under the OH emblem.
+            # The illuminated planetary horizon from the reference, under the flow emblem.
             ellipse=QRectF(-w*.17,h*.70,w*1.34,h*1.2)
             p.setBrush(color('#030810')); p.setPen(QPen(color('#8fc9f1',20),18)); p.drawEllipse(ellipse)
             p.setPen(QPen(color('#9bdbff',40),6)); p.drawEllipse(ellipse)
