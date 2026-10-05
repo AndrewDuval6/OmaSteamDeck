@@ -16,4 +16,4 @@ omasteamdeck = "omasteamdeck.app:main"
 include = ["omasteamdeck*"]
 
 [tool.setuptools.package-data]
-omasteamdeck = ["assets/*.png"]
+omasteamdeck = ["assets/*.png", "assets/*.svg", "assets/startup/*.html", "assets/startup/*.css", "assets/startup/*.js", "assets/startup/vendor/*.js", "assets/startup/vendor/*.txt"]

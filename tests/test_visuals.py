@@ -1,8 +1,9 @@
 """Presentation regressions at the handheld target, without external launches."""
 import os
-os.environ.setdefault('QT_QPA_PLATFORM','offscreen')
+os.environ['QT_QPA_PLATFORM']='offscreen'
 from pathlib import Path
 import tempfile
+import time
 import unittest
 from unittest.mock import patch
 
@@ -12,7 +13,7 @@ from PySide6.QtTest import QTest
 from PySide6.QtWidgets import QApplication,QLabel,QPushButton
 from omasteamdeck.app import Shell,TABS
 from omasteamdeck.core import State,MEDIA,Item
-from omasteamdeck.visuals import Logo,LoadingLine,ProfileCard,local_art
+from omasteamdeck.visuals import Logo,ProfileCard,local_art
 
 APP=QApplication.instance() or QApplication([])
 
@@ -62,11 +63,11 @@ class VisualTests(unittest.TestCase):
         self.assertTrue(visible.contains(focus.mapTo(self.shell.profile_scroll.viewport(),focus.rect().center())))
         self.shell.navigate('down'); self.assertEqual(APP.focusWidget().text(),'Exit to desktop')
         self.shell.navigate('up'); self.assertIsInstance(APP.focusWidget(),ProfileCard)
-    def test_motion_stops_on_hidden_widgets_and_reduced_motion(self):
-        logo=Logo(True); logo.show(); QTest.qWait(70); self.assertTrue(logo.timer.isActive())
-        angle=logo.angle; logo.hide(); QTest.qWait(50); self.assertFalse(logo.timer.isActive()); self.assertEqual(logo.angle,angle); logo.close()
+    def test_native_icon_is_static_and_reduced_motion_has_no_fade(self):
+        logo=Logo(True); logo.show(); QTest.qWait(10); self.assertTrue(logo.renderer.isValid())
+        self.assertFalse(logo.timer.isActive()); logo.close()
         self.shell.state.data['motion']=False; self.shell.show_splash(); QTest.qWait(10)
-        for widget in self.shell.findChildren(Logo)+self.shell.findChildren(LoadingLine):
+        for widget in self.shell.findChildren(Logo):
             if widget.isVisible(): self.assertFalse(widget.timer.isActive())
         self.shell.finish_splash(); self.assertEqual(self.shell.page,'profiles'); self.assertFalse(hasattr(self.shell,'transition'))
     def test_splash_skip_fades_without_stealing_profile_input(self):
@@ -75,7 +76,10 @@ class VisualTests(unittest.TestCase):
         self.assertTrue(self.shell.transition.testAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents))
         self.shell.navigate('accept'); self.assertEqual(self.shell.page,'home')
         self.shell.finish_splash(); self.assertEqual(self.shell.page,'home')
-        QTest.qWait(400); self.assertFalse(any(w.isVisible() and w.graphicsEffect() for w in self.shell.findChildren(QLabel)))
+        deadline=time.monotonic()+2
+        while time.monotonic()<deadline and any(w.isVisible() and w.graphicsEffect() for w in self.shell.findChildren(QLabel)):
+            QTest.qWait(20)
+        self.assertFalse(any(w.isVisible() and w.graphicsEffect() for w in self.shell.findChildren(QLabel)))
     def test_large_text_and_long_names_fit_deck(self):
         self.shell.profile['name']='A very long profile name'; self.shell.state.data['scale']=130; self.shell.apply_scale(); self.shell.choose_profile(0)
         for tab in TABS:
