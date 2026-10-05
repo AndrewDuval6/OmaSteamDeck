@@ -4,10 +4,17 @@ The review branch is **`build1/integration`**. Do not merge it into `main` until
 the combined build is reviewed and the physical Steam Deck acceptance checklist
 is completed. Development-host checks do not establish hardware acceptance.
 
+**Open startup requirement:** the user's latest brief requires Three.js with
+real geometry, materials, lighting and a camera. The currently integrated
+QPainter-projected startup does **not** satisfy that requirement. A separately
+tested UI startup commit is pending and must pass integration QA before this
+candidate can meet the updated Build 1 target.
+
 ## Source branches
 
-- Core: `aef594b` — native shell, SDL controls, Hyprland/Omarchy integration,
-  discovery and launch, lifecycle hardening and native smoke tests.
+- Core: `ae8f4c1` — native shell, SDL controls, Hyprland/Omarchy integration,
+  discovery and launch, lifecycle hardening, native smoke tests and WebEngine
+  runtime preflight with user-local dependency guidance.
 - UI: `58cdda3`, including `824c6b9` — reference-based handheld layout,
   OmaFlow display name, readable wrapped titles and provisional startup symbol.
 
@@ -45,7 +52,7 @@ Steam game. The real application fixture is a small local subprocess; it does no
 stand in for game, browser, or DRM testing.
 
 On the development host (ThinkPad, Hyprland 0.56.2, Qt 6.11.2), the combined
-baseline passes 51 automated cases and these additional checks:
+baseline passes 55 automated cases and these additional checks:
 
 - Real SDL virtual-controller input through profile selection, all seven
   sections, D-pad focus, pin and back.

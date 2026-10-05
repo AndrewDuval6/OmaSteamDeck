@@ -1,6 +1,6 @@
 """Acceptance flows across the UI, persisted profiles and native launch layer."""
 import os
-os.environ.setdefault('QT_QPA_PLATFORM', 'offscreen')
+os.environ['QT_QPA_PLATFORM'] = 'offscreen'
 
 from pathlib import Path
 import sys

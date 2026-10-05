@@ -1,6 +1,6 @@
 """Presentation regressions at the handheld target, without external launches."""
 import os
-os.environ.setdefault('QT_QPA_PLATFORM','offscreen')
+os.environ['QT_QPA_PLATFORM']='offscreen'
 from pathlib import Path
 import tempfile
 import unittest
