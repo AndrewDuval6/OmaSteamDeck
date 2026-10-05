@@ -12,7 +12,7 @@ from .core import State, Item, MEDIA, STORES, discover_apps, discover_games, des
 from .controller import Controller
 from .desktop import Desktop, DesktopError, WORKSPACES, omarchy_command
 
-from .visuals import STYLE, Logo, Card, ProfileCard, LoadingLine, DetailArtwork, Backdrop, NavButton, CategoryCard
+from .visuals import DISPLAY_NAME, STYLE, Logo, Card, ProfileCard, LoadingLine, DetailArtwork, Backdrop, NavButton, CategoryCard
 
 TABS = ['Home', 'Games', 'Media', 'Store', 'Library', 'Apps', 'Settings']
 
@@ -64,7 +64,7 @@ class Shell(Backdrop):
         super().__init__()
         self.state=state or State(); self.profile_index=0; self.tab='Home'; self.query=''; self.page='splash'; self.rows=[]; self.cards=[]; self.current_items=[]; self.children_processes=[]
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground,True)
-        self.setWindowTitle('OmaHome'); self.resize(1280,800); self.setMinimumSize(800,600)
+        self.setWindowTitle(DISPLAY_NAME); self.resize(1280,800); self.setMinimumSize(800,600)
         self.root=QVBoxLayout(self); self.root.setContentsMargins(34,28,34,20); self.root.setSpacing(14)
         self.controller=Controller()
         self.desktop=desktop or Desktop(enabled=QApplication.platformName()!='offscreen')
@@ -107,7 +107,7 @@ class Shell(Backdrop):
         self.clear(); self.page='splash'; self.update(); self.root.addStretch()
         logo=Logo(self.state.data['motion']); logo.setFixedSize(540,260)
         self.root.addWidget(logo,0,Qt.AlignmentFlag.AlignHCenter)
-        title=label('OmaHome','title'); title.setAlignment(Qt.AlignmentFlag.AlignCenter); self.root.addWidget(title)
+        title=label(DISPLAY_NAME,'title'); title.setAlignment(Qt.AlignmentFlag.AlignCenter); self.root.addWidget(title)
         sub=label('A LITTLE MACHINE.  A WHOLE WORLD.','eyebrow'); sub.setAlignment(Qt.AlignmentFlag.AlignCenter); self.root.addWidget(sub)
         self.root.addSpacing(24)
         self.root.addWidget(LoadingLine(self.state.data['motion']),0,Qt.AlignmentFlag.AlignHCenter)
@@ -130,7 +130,7 @@ class Shell(Backdrop):
             self.transition.show(); animation.start()
     def show_profiles(self):
         self.clear(); self.page='profiles'; self.query=''; self.update()
-        top=QHBoxLayout(); top.addWidget(label('OmaHome','brand')); top.addStretch(); top.addWidget(label(self.status_text(),'muted')); self.root.addLayout(top)
+        top=QHBoxLayout(); top.addWidget(label(DISPLAY_NAME,'brand')); top.addStretch(); top.addWidget(label(self.status_text(),'muted')); self.root.addLayout(top)
         self.root.addSpacing(30)
         self.root.addWidget(label('Choose a profile','title'))
         self.root.addWidget(label('Pick your space to continue.','heroCopy'))
@@ -181,7 +181,7 @@ class Shell(Backdrop):
         self.clear(); self.page='home'; self.update()
         scale=self.state.data['scale']/100
         top=QHBoxLayout(); intro=QVBoxLayout(); intro.setSpacing(8)
-        intro.addWidget(label('OmaHome','brand'))
+        intro.addWidget(label(DISPLAY_NAME,'brand'))
         greeting='Welcome back, '+self.profile['name'] if self.tab=='Home' else self.tab
         title=label(greeting,'greeting'); title.setToolTip(greeting)
         title.setText(title.fontMetrics().elidedText(greeting,Qt.TextElideMode.ElideRight,560)); intro.addWidget(title)
@@ -231,7 +231,7 @@ class Shell(Backdrop):
                 card=Card(('★ ' if item.id in self.profile['favorites'] else '')+item.name,item.subtitle,item.icon,i,lambda checked=False,v=item:self.details(v),self.state.data['scale']/100)
                 card.item=item; card.setMinimumHeight(round(176*self.state.data['scale']/100)); self.grid.addWidget(card,2,i); self.cards.append(card)
         elif self.tab=='Settings':
-            entries=[('Desktop & workspaces','Omarchy + Hyprland' if self.desktop.available else 'Session setup needed',self.workspaces),('Sound & brightness','Handheld quick controls',self.quick_controls),('Omarchy tools','Files, terminal & system menu',self.omarchy_tools),('Display', 'Full screen' if self.isFullScreen() else 'Windowed',self.toggle_fullscreen),('Motion','Animated logo' if self.state.data['motion'] else 'Reduced motion',self.toggle_motion),('Text size',str(self.state.data['scale'])+'%',self.toggle_scale),('Profiles','Switch or create a profile',self.show_profiles),('Rename profile',self.profile['name'],self.rename),('Controller help','Controls & Steam Deck setup',self.help),('About','OmaHome · Build 1',self.about),('Exit to desktop','Close OmaHome',self.close)]
+            entries=[('Desktop & workspaces','Omarchy + Hyprland' if self.desktop.available else 'Session setup needed',self.workspaces),('Sound & brightness','Handheld quick controls',self.quick_controls),('Omarchy tools','Files, terminal & system menu',self.omarchy_tools),('Display', 'Full screen' if self.isFullScreen() else 'Windowed',self.toggle_fullscreen),('Motion','Animated logo' if self.state.data['motion'] else 'Reduced motion',self.toggle_motion),('Text size',str(self.state.data['scale'])+'%',self.toggle_scale),('Profiles','Switch or create a profile',self.show_profiles),('Rename profile',self.profile['name'],self.rename),('Controller help','Controls & Steam Deck setup',self.help),('About',DISPLAY_NAME+' · Build 1',self.about),('Exit to desktop','Close OmaHome',self.close)]
             self.section.setText('PREFERENCES')
             for title,subtitle,callback in entries: self.add_card(title,subtitle,'⚙',callback)
         else:
@@ -281,7 +281,7 @@ class Shell(Backdrop):
         layout.addWidget(DetailArtwork(item))
         title=label(item.name,'title'); title.setWordWrap(True); layout.addWidget(title)
         subtitle=label(item.subtitle,'muted'); subtitle.setWordWrap(True); layout.addWidget(subtitle)
-        desc='Opens externally. Return to OmaHome when you finish.'
+        desc='Opens externally. Return to '+DISPLAY_NAME+' when you finish.'
         if item in STORES: desc='Browse the store externally. Purchases and installations are handled by the store.'
         if item in MEDIA: desc='Opens in your default browser. A subscription or sign-in may be required. Playback support depends on your browser.'
         body=label(desc,'muted'); body.setWordWrap(True); layout.addWidget(body)
@@ -334,7 +334,7 @@ class Shell(Backdrop):
         d=QDialog(self); d.setWindowTitle(title); d.setMinimumWidth(650); layout=QVBoxLayout(d); layout.setContentsMargins(28,24,28,24); layout.setSpacing(20)
         layout.addWidget(label(title,'title')); body=label(text,'muted'); body.setWordWrap(True); layout.addWidget(body); b=button('Got it',d.accept); layout.addWidget(b); b.setFocus(); d.exec()
     def help(self): self.info('Every control, within reach.','D-pad / left stick: move · A / Enter: choose · B / Esc: back\nX / F: pin · Y / /: search · LB / RB: sections\nStart / F1: Settings · View / F2: workspaces\nF11: full screen · Alt+F4: exit\n\nWhile in Hyprland, hold View (Back):\n+ Start: return to the console from any app\n+ D-pad: focus a tiled window\n+ LB / RB: switch OmaHome workspaces\n+ X: tile the focused app · + Y: move it to Desktop\n\nIn Steam Input, select Gamepad (not keyboard emulation) to expose these controls. Trackpads or touch operate desktop apps. The shell does not intercept normal gameplay input. Steam may reserve the Guide button; View + Start is the fallback.')
-    def about(self): self.info('OmaHome · Build 1','Native handheld console + Omarchy desktop, built for Steam Deck at 1280 × 800.\n\nHyprland: '+self.desktop.version+'\nOmarchy: '+('Detected' if self.desktop.omarchy else 'Not detected')+'\n\nProfiles keep favorites and recent launch requests locally; they are not separate OS accounts. Games use Steam, apps use desktop launchers, and media / stores open in your browser.\n\nNo partitioning, bootloader changes or automatic OS installation. TV and docked optimization comes later. Not affiliated with Valve or Omarchy.')
+    def about(self): self.info(DISPLAY_NAME+' · Build 1','Native handheld console + Omarchy desktop, built for Steam Deck at 1280 × 800.\n\nHyprland: '+self.desktop.version+'\nOmarchy: '+('Detected' if self.desktop.omarchy else 'Not detected')+'\n\nProfiles keep favorites and recent launch requests locally; they are not separate OS accounts. Games use Steam, apps use desktop launchers, and media / stores open in your browser.\n\nNo partitioning, bootloader changes or automatic OS installation. TV and docked optimization comes later. Not affiliated with Valve or Omarchy.')
     def attach_desktop(self):
         try:
             address=self.desktop.shell_address(os.getpid())
@@ -434,7 +434,7 @@ class Shell(Backdrop):
         layout.addWidget(button('Back',d.reject)); d.findChildren(QPushButton)[0].setFocus(); d.exec()
     def message(self,text):
         if self.page=='home': self.notice.setText(text); self.notice.setWordWrap(True); self.toast_timer.start(6500)
-        else: self.info('OmaHome',text)
+        else: self.info(DISPLAY_NAME,text)
     def clear_status(self):
         if self.page=='home': self.notice.setText('D-PAD  Navigate     A  Select     B  Profiles     X  Pin     Y  Search     LB / RB  Sections')
     def navigate(self,action):
@@ -516,14 +516,14 @@ class Shell(Backdrop):
         self.controller.close(); self.poll_timer.stop(); QApplication.instance().removeEventFilter(self); event.accept()
 
 def main():
-    parser=argparse.ArgumentParser(description='OmaHome native handheld shell')
+    parser=argparse.ArgumentParser(description=DISPLAY_NAME+' native handheld shell')
     parser.add_argument('--windowed',action='store_true'); parser.add_argument('--skip-splash',action='store_true'); parser.add_argument('--config',type=Path,help='Alternative state file for testing')
     args=parser.parse_args()
     app=QApplication(sys.argv[:1]); app.setApplicationName('OmaSteamDeck')
     state=State(args.config)
     try: state.path.parent.mkdir(parents=True,exist_ok=True)
     except OSError as exc:
-        print('Cannot create OmaHome config folder: '+str(exc),file=sys.stderr); return 1
+        print('Cannot create '+DISPLAY_NAME+' config folder: '+str(exc),file=sys.stderr); return 1
     lock=QLockFile(str(state.path.with_suffix('.lock'))); lock.setStaleLockTime(0)
     if not lock.tryLock(0):
         info=lock.getLockInfo()
@@ -531,7 +531,7 @@ def main():
         if info and info[0]>0 and desktop.available:
             try: desktop.return_console(info[0]); return 0
             except DesktopError: pass
-        print('OmaHome is already running, or its config folder is not writable.',file=sys.stderr); return 1
+        print(DISPLAY_NAME+' is already running, or its config folder is not writable.',file=sys.stderr); return 1
     shell=Shell(state,args.windowed,args.skip_splash)
     result=app.exec(); lock.unlock(); return result
 
