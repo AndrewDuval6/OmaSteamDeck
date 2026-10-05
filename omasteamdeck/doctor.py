@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 import shutil
 from .desktop import Desktop
+from .runtime import check_runtime
 
 def main():
     desktop=Desktop()
@@ -15,7 +16,9 @@ def main():
         from PySide6.QtCore import qVersion
         report['qt']=qVersion()
     except ImportError: report['qt']='Missing PySide6'
+    report['startup_runtime_errors']=check_runtime(require_webengine=True)
+    report['webgl_rendering']='Not tested by this read-only preflight'
     print(json.dumps(report,indent=2))
-    return 0 if desktop.available and desktop.omarchy and report['sdl2'] and report['qt']!='Missing PySide6' else 1
+    return 0 if desktop.available and desktop.omarchy and report['sdl2'] and report['qt']!='Missing PySide6' and not report['startup_runtime_errors'] else 1
 
 if __name__=='__main__': raise SystemExit(main())

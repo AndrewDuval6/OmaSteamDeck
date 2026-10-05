@@ -6,7 +6,7 @@ A native, controller-first Steam Deck handheld console with a real Omarchy + Hyp
 
 ## Run
 
-The full experience requires an **existing Omarchy + Hyprland session on Steam Deck**, Python 3.10+, PySide6 and SDL2. Steam is required for Steam games; media/store links use the default browser. Stock SteamOS Gaming Mode does not provide the full desktop integration.
+The full experience requires an **existing Omarchy + Hyprland session on Steam Deck**, Python 3.10+, a complete PySide6 installation including Qt WebEngine and Qt WebChannel, and SDL2. Steam is required for Steam games; media/store links use the default browser. Stock SteamOS Gaming Mode does not provide the full desktop integration.
 
 ```bash
 git clone https://github.com/AndrewDuval6/OmaSteamDeck.git
@@ -14,13 +14,15 @@ cd OmaSteamDeck
 ./run.sh
 ```
 
-If PySide6 is not already available, install it locally in the checkout:
+If PySide6 or its WebEngine native libraries are unavailable, install a complete runtime locally in the checkout:
 
 ```bash
 python3 -m venv .venv
-.venv/bin/python -m pip install -e .
+.venv/bin/python -m pip install --upgrade -e .
 ./run.sh
 ```
+
+The launcher checks Qt imports and the QtWebEngineProcess helper before opening the Three.js startup view. Missing runtime files produce setup instructions; `--skip-splash` allows native-only diagnostics. Import checks do not establish GPU/WebGL rendering support.
 
 No `sudo` is needed. SDL2 is loaded from the existing system; without it, keyboard/touch navigation remains available. Installing missing system/OS components is outside this build's installer scope.
 
