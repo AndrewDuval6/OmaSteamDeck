@@ -1,6 +1,7 @@
 """OmaSteamDeck native handheld shell. No web server or elevated privileges."""
 from __future__ import annotations
 import argparse
+import configparser
 import math
 import os
 from pathlib import Path
@@ -246,7 +247,11 @@ class Shell(QWidget):
         self.populate()
         self.notice=label('A  Open    B  Back    X  Pin    Y  Search    LB / RB  Sections    ☰  Settings','muted'); self.root.addWidget(self.notice)
         target=next((c for c in self.cards if (focus_id and getattr(getattr(c,'item',None),'id',None)==focus_id) or (focus_title and getattr(c,'title',None)==focus_title)), self.cards[0] if self.cards else self.nav[TABS.index(self.tab)])
-        target.setFocus(); self.scroll.ensureWidgetVisible(target,16,16)
+        target.setFocus()
+        # Rebuilt cards need their final geometry before restoring scroll position.
+        # Tie the callback to the target so a subsequent page change cancels it.
+        scroll=self.scroll
+        QTimer.singleShot(0,target,lambda:scroll.ensureWidgetVisible(target,16,16))
     def catalog(self): return self.games+self.apps+MEDIA+STORES
     def populate(self):
         if self.tab=='Settings':
@@ -314,7 +319,7 @@ class Shell(QWidget):
                 self.message('No application can open this link. Install a compatible browser or Steam.'); return
             recent=self.profile['recent']; self.profile['recent']=[item.id]+[v for v in recent if v!=item.id][:11]; self.persist()
             self.message('Opened '+item.name+'. Hold View + Start to return to the console.' if self.desktop.available else 'Opened '+item.name+'. Use your desktop window switcher to return.')
-        except (OSError,ValueError,KeyError,DesktopError) as exc:
+        except (OSError,ValueError,KeyError,configparser.Error,DesktopError) as exc:
             if self.desktop.available:
                 try: self.desktop.return_console(os.getpid())
                 except DesktopError: pass

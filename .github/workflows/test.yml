@@ -17,3 +17,10 @@ jobs:
           QT_QPA_PLATFORM: offscreen
       - run: python tools/smoke_input.py
       - run: python -m compileall -q omasteamdeck tools
+      - run: bash -n run.sh && ./run.sh --help
+      - name: Verify installed package outside the checkout
+        run: |
+          python -m pip wheel --no-deps --wheel-dir dist .
+          python -m pip install --no-deps --target "$RUNNER_TEMP/osd-package" dist/*.whl
+          cd "$RUNNER_TEMP"
+          PYTHONPATH="$RUNNER_TEMP/osd-package" python -m omasteamdeck.app --help
